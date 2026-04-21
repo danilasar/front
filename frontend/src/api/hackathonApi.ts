@@ -106,4 +106,9 @@ export const teamApi = {
     });
     return response.data;
   },
+
+  async disqualifyMember(hackathonId: string, teamId: string, memberId: string) {
+    const response = await api.post<Team>(`/hackathons/${hackathonId}/teams/${teamId}/members/${memberId}/disqualify`);
+    return response.data;
+  },
 };

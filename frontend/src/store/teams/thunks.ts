@@ -61,3 +61,21 @@ export const updateTeamStatus = createAsyncThunk(
     }
   },
 );
+
+export const disqualifyTeamMember = createAsyncThunk(
+  "teams/disqualifyMember",
+  async (data: { hackathonId: string; teamId: string; memberId: string }, { dispatch }) => {
+    try {
+      dispatch(startLoading());
+      const response = await teamApi.disqualifyMember(data.hackathonId, data.teamId, data.memberId);
+      dispatch(upsertTeam(response));
+      return response;
+    } catch (e: unknown) {
+      const error = e as AxiosError<ApiError>;
+      dispatch(setError(getErrorMessage(error)));
+      return null;
+    } finally {
+      dispatch(stopLoading());
+    }
+  },
+);

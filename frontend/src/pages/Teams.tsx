@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
+import BlockIcon from "@mui/icons-material/Block";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import LinkIcon from "@mui/icons-material/Link";
 import PersonAddAltIcon from "@mui/icons-material/PersonAddAlt";
+import ReportGmailerrorredIcon from "@mui/icons-material/ReportGmailerrorred";
 import SendIcon from "@mui/icons-material/Send";
 import StarsIcon from "@mui/icons-material/Stars";
 import {
@@ -9,7 +12,6 @@ import {
   Box,
   Button,
   Card,
-  CardActions,
   CardContent,
   Chip,
   FormControl,
@@ -17,12 +19,23 @@ import {
   MenuItem,
   Select,
   Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
   Typography,
 } from "@mui/material";
 import { useParams } from "react-router-dom";
 import { GridBackGroundLayout } from "../ui/GridBackGroundLayout";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { clearInvitationLinks, createTeamApplication, fetchTeams, updateTeamStatus } from "../store/teams";
+import {
+  clearInvitationLinks,
+  createTeamApplication,
+  disqualifyTeamMember,
+  fetchTeams,
+  updateTeamStatus,
+} from "../store/teams";
 import type { TeamStatus } from "../domain/types";
 import { InputTextField } from "../ui/InputTextField";
 import {
@@ -38,14 +51,23 @@ import {
   type TeamMemberFormValues,
 } from "../domain/teamForms";
 import { fetchHackathon } from "../store/hackathons";
-
-const nextStatus: TeamStatus = "admitted";
+import { explainHackathonManagementAccess } from "../domain/access";
+import {
+  formatTeamDate,
+  getTeamCaptain,
+  normalizeModerationReason,
+  teamMemberStatusLabels,
+  teamStatusLabels,
+  teamStatusOptions,
+  type TeamStatusFilter,
+} from "../domain/teamModeration";
 
 export default function Teams() {
   const { hackathonId } = useParams();
   const dispatch = useAppDispatch();
   const teams = useAppSelector((state) => state.teams.items);
   const hackathon = useAppSelector((state) => state.hackathons.current);
+  const user = useAppSelector((state) => state.auth.user);
   const [form, setForm] = useState<TeamApplicationFormValues>({
     name: "",
     members: [
@@ -57,15 +79,25 @@ export default function Teams() {
   });
   const [errors, setErrors] = useState<string[]>([]);
   const [inviteViews, setInviteViews] = useState<InvitationLinkView[]>([]);
+  const [statusFilter, setStatusFilter] = useState<TeamStatusFilter>("all");
+  const [moderationReasons, setModerationReasons] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!hackathonId) return;
-    void dispatch(fetchTeams({ hackathonId }));
+    void dispatch(fetchTeams({
+      hackathonId,
+      status: statusFilter === "all" ? undefined : statusFilter,
+    }));
+  }, [dispatch, hackathonId, statusFilter]);
+
+  useEffect(() => {
+    if (!hackathonId) return;
     void dispatch(fetchHackathon(hackathonId));
   }, [dispatch, hackathonId]);
 
   const minTeamSize = hackathon?.minTeamSize ?? 1;
   const maxTeamSize = hackathon?.maxTeamSize ?? 5;
+  const managementAccess = explainHackathonManagementAccess(user, hackathon);
 
   const updateMember = (id: string, patch: Partial<TeamMemberFormValues>) => {
     setForm((prev) => ({
@@ -134,6 +166,25 @@ export default function Teams() {
         members: [{ ...createEmptyExistingMember("captain"), captain: true }],
       });
     }
+  };
+
+  const updateModerationReason = (teamId: string, value: string) => {
+    setModerationReasons((prev) => ({ ...prev, [teamId]: value }));
+  };
+
+  const handleTeamStatus = async (teamId: string, status: TeamStatus) => {
+    if (!hackathonId) return;
+    await dispatch(updateTeamStatus({
+      hackathonId,
+      teamId,
+      status,
+      reason: normalizeModerationReason(moderationReasons[teamId] ?? ""),
+    }));
+  };
+
+  const handleDisqualifyMember = async (teamId: string, memberId: string) => {
+    if (!hackathonId) return;
+    await dispatch(disqualifyTeamMember({ hackathonId, teamId, memberId }));
   };
 
   return (
@@ -299,38 +350,152 @@ export default function Teams() {
           </Alert>
         )}
 
-        {teams.map((team) => (
-          <Card key={team.id}>
-            <CardContent>
-              <Stack spacing={1}>
-                <Chip label={team.status} />
-                <Typography variant="h5">{team.name}</Typography>
-                <Typography color="text.secondary">Участников: {team.members.length}</Typography>
-                <Stack direction="row" spacing={1} flexWrap="wrap">
-                  {team.members.map((member) => (
-                    <Chip
-                      key={member.id}
-                      label={`${member.fullName}${member.captain ? " · капитан" : ""}`}
-                      color={member.status === "pending_invitation" ? "primary" : "default"}
-                    />
-                  ))}
-                </Stack>
-              </Stack>
-            </CardContent>
-            <CardActions>
-              <Button
-                disabled={!hackathonId || team.status === nextStatus}
-                onClick={() => {
-                  if (hackathonId) {
-                    void dispatch(updateTeamStatus({ hackathonId, teamId: team.id, status: nextStatus }));
-                  }
-                }}
-              >
-                Допустить
-              </Button>
-            </CardActions>
-          </Card>
-        ))}
+        <Card>
+          <CardContent>
+            <Stack spacing={2}>
+              <Box display="flex" justifyContent="space-between" gap={2} flexWrap="wrap" alignItems="center">
+                <Box>
+                  <Typography variant="h5">Таблица заявок</Typography>
+                  <Typography color="text.secondary">
+                    Статусы команд, составы, капитаны и модерация участников
+                  </Typography>
+                </Box>
+                <FormControl sx={{ minWidth: 220 }}>
+                  <InputLabel id="team-status-filter-label">Статус</InputLabel>
+                  <Select
+                    labelId="team-status-filter-label"
+                    label="Статус"
+                    value={statusFilter}
+                    onChange={(event) => setStatusFilter(event.target.value as TeamStatusFilter)}
+                  >
+                    {teamStatusOptions.map((option) => (
+                      <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Box>
+
+              <Alert severity={managementAccess.allowed ? "success" : "info"}>
+                {managementAccess.reason}
+              </Alert>
+
+              <Box sx={{ overflowX: "auto" }}>
+                <Table size="small" sx={{ minWidth: 980 }}>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Команда</TableCell>
+                      <TableCell>Статус</TableCell>
+                      <TableCell>Капитан</TableCell>
+                      <TableCell>Состав</TableCell>
+                      <TableCell>Подача</TableCell>
+                      <TableCell>Причина</TableCell>
+                      <TableCell align="right">Действия</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {teams.map((team) => {
+                      const captain = getTeamCaptain(team);
+                      const reason = moderationReasons[team.id] ?? team.moderationReason ?? "";
+                      return (
+                        <TableRow key={team.id} hover>
+                          <TableCell>
+                            <Stack spacing={0.5}>
+                              <Typography fontWeight={700}>{team.name}</Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                {team.members.length} участн.
+                              </Typography>
+                            </Stack>
+                          </TableCell>
+                          <TableCell>
+                            <Chip label={teamStatusLabels[team.status]} color={team.status === "admitted" ? "secondary" : "default"} />
+                          </TableCell>
+                          <TableCell>
+                            {captain ? (
+                              <Stack spacing={0.5}>
+                                <Typography>{captain.fullName}</Typography>
+                                {captain.login && (
+                                  <Typography variant="body2" color="text.secondary">@{captain.login}</Typography>
+                                )}
+                              </Stack>
+                            ) : (
+                              <Typography color="text.secondary">Не выбран</Typography>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                              {team.members.map((member) => (
+                                <Chip
+                                  key={member.id}
+                                  label={`${member.fullName}${member.captain ? " · капитан" : ""} · ${teamMemberStatusLabels[member.status]}`}
+                                  color={member.status === "pending_invitation" ? "primary" : member.status === "disqualified" ? "error" : "default"}
+                                  onDelete={managementAccess.allowed && member.status !== "disqualified"
+                                    ? () => {
+                                      void handleDisqualifyMember(team.id, member.id);
+                                    }
+                                    : undefined}
+                                  deleteIcon={<BlockIcon />}
+                                />
+                              ))}
+                            </Stack>
+                          </TableCell>
+                          <TableCell>{formatTeamDate(team.submittedAt)}</TableCell>
+                          <TableCell sx={{ minWidth: 220 }}>
+                            <InputTextField
+                              label="Reason"
+                              value={reason}
+                              size="small"
+                              disabled={!managementAccess.allowed}
+                              onChange={(event) => updateModerationReason(team.id, event.target.value)}
+                            />
+                          </TableCell>
+                          <TableCell align="right">
+                            <Stack direction="row" spacing={1} justifyContent="flex-end" flexWrap="wrap" useFlexGap>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                startIcon={<CheckCircleOutlineIcon />}
+                                disabled={!managementAccess.allowed || team.status === "admitted"}
+                                onClick={() => {
+                                  void handleTeamStatus(team.id, "admitted");
+                                }}
+                              >
+                                Допустить
+                              </Button>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                color="warning"
+                                startIcon={<ReportGmailerrorredIcon />}
+                                disabled={!managementAccess.allowed || team.status === "rejected"}
+                                onClick={() => {
+                                  void handleTeamStatus(team.id, "rejected");
+                                }}
+                              >
+                                Отклонить
+                              </Button>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                color="error"
+                                startIcon={<BlockIcon />}
+                                disabled={!managementAccess.allowed || team.status === "disqualified"}
+                                onClick={() => {
+                                  void handleTeamStatus(team.id, "disqualified");
+                                }}
+                              >
+                                Дискв.
+                              </Button>
+                            </Stack>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
       </Stack>
     </GridBackGroundLayout>
   );

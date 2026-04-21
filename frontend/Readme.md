@@ -12,7 +12,10 @@ Implemented user-facing scenarios:
 - view profile;
 - submit a team application;
 - add existing team members by login;
-- add new team members and receive invite links.
+- add new team members and receive invite links;
+- view team applications in a status-filtered table;
+- moderate teams by admitting, rejecting, or disqualifying them;
+- disqualify individual team members.
 
 Implemented admin scenarios:
 

@@ -21,6 +21,12 @@ import {
   toTeamApplicationRequest,
   validateTeamApplicationForm,
 } from "../frontend/src/domain/teamForms.ts";
+import {
+  formatTeamDate,
+  getTeamCaptain,
+  normalizeModerationReason,
+  teamStatusLabels,
+} from "../frontend/src/domain/teamModeration.ts";
 import type { Hackathon, UserProfile } from "../frontend/src/domain/types.ts";
 
 const hackathon = (organizerIds: string[]): Pick<Hackathon, "organizerIds"> => ({
@@ -235,4 +241,43 @@ test("ссылки приглашений получают подписи из �
     label: "Bob Newbie",
     url: "http://localhost/invite/token",
   }]);
+});
+
+test("moderation helpers находят капитана и нормализуют reason", () => {
+  const captain = getTeamCaptain({
+    members: [
+      {
+        id: "member-1",
+        user: null,
+        source: "existing_user",
+        login: "alice",
+        fullName: "Alice",
+        email: null,
+        captain: false,
+        status: "active",
+        profileFields: {},
+      },
+      {
+        id: "member-2",
+        user: null,
+        source: "invited_new_user",
+        login: null,
+        fullName: "Bob",
+        email: "bob@example.test",
+        captain: true,
+        status: "pending_invitation",
+        profileFields: {},
+      },
+    ],
+  });
+
+  assert.equal(captain?.id, "member-2");
+  assert.equal(normalizeModerationReason("  сильная заявка  "), "сильная заявка");
+  assert.equal(normalizeModerationReason("   "), undefined);
+  assert.equal(teamStatusLabels.admitted, "Допущена");
+});
+
+test("дата подачи команды форматируется для таблицы заявок", () => {
+  assert.equal(formatTeamDate(null), "Не подана");
+  assert.match(formatTeamDate("2026-06-01T12:30:00.000Z"), /\d{2}\.\d{2}\.\d{4}/);
 });

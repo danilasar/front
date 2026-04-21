@@ -620,14 +620,23 @@ async function handleApi(req, res, url, path, body) {
   if (registrationsMatch && req.method === "GET") {
     requireAssignedOrganizer(req, res, registrationsMatch[1]);
     if (res.writableEnded) return;
-    send(res, 200, page(teams.map((team) => ({ team, submittedAt: team.submittedAt })), url));
+    send(res, 200, page(
+      teams
+        .filter((team) => team.hackathonId === registrationsMatch[1])
+        .map((team) => ({ team, submittedAt: team.submittedAt })),
+      url,
+    ));
     return;
   }
 
   const teamsMatch = path.match(/^\/hackathons\/([^/]+)\/teams$/);
   if (teamsMatch) {
     if (req.method === "GET") {
-      send(res, 200, page(teams.filter((team) => team.hackathonId === teamsMatch[1]), url));
+      const status = url.searchParams.get("status");
+      const items = teams.filter((team) =>
+        team.hackathonId === teamsMatch[1] && (!status || team.status === status)
+      );
+      send(res, 200, page(items, url));
       return;
     }
     if (req.method === "POST") {
