@@ -42,11 +42,18 @@ export default function AdminPanel() {
   return (
     <GridBackGroundLayout sx={{ py: 14 }}>
       <Stack spacing={3} sx={{ width: "min(900px, 100%)", px: 2 }}>
-        <Typography variant="h3">Администрирование</Typography>
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-          <Button variant="contained" onClick={handleCreateHackathon}>Создать хакатон</Button>
-          <Button variant="outlined" onClick={handleCreateOrganizer}>Создать организатора</Button>
-        </Stack>
+        <Card>
+          <CardContent>
+            <Stack spacing={2}>
+              <Typography variant="h3">Администрирование</Typography>
+              <Typography color="text.secondary">Глобальные сущности: хакатоны, организаторы и назначения</Typography>
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+                <Button variant="contained" onClick={handleCreateHackathon}>Создать хакатон</Button>
+                <Button variant="outlined" onClick={handleCreateOrganizer}>Создать организатора</Button>
+              </Stack>
+            </Stack>
+          </CardContent>
+        </Card>
 
         <Typography variant="h5">Организаторы</Typography>
         {organizers.map((organizer) => (

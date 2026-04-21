@@ -11,6 +11,7 @@ export const CustomForm: React.FC<{
         display: 'flex',
         flexDirection: "column",
         alignItems: 'center',
+        width: "min(420px, 100%)",
       }}
     >
       {children}

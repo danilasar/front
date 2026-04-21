@@ -36,8 +36,7 @@ export default function Profile() {
       <Container maxWidth="sm">
         <Card
           sx={{
-            borderRadius: 4,
-            boxShadow: 3
+            borderRadius: 2,
           }}
         >
           <CardContent>

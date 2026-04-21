@@ -13,13 +13,12 @@ import { RoleWrapper } from "./components/wrappers/RoleWrapper";
 import { ColorModeContext } from "./themeModeContext";
 
 function App() {
-  // Загружаем из localStorage при старте, по умолчанию true (dark)
   const [darkMode, setDarkMode] = useState(() => {
     try {
       const saved = localStorage.getItem('darkMode');
-      return saved ? JSON.parse(saved) : true;
+      return saved ? JSON.parse(saved) : false;
     } catch {
-      return true;
+      return false;
     }
   });
 

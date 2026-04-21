@@ -26,11 +26,15 @@ export default function HackathonDetails() {
       <Stack spacing={3} sx={{ width: "min(900px, 100%)", px: 2 }}>
         {hackathon && (
           <>
+            <Card>
+              <CardContent>
             <Stack spacing={1}>
               <Chip label={hackathon.status} color={hackathon.status === "active" ? "secondary" : "default"} />
               <Typography variant="h3">{hackathon.title}</Typography>
               <Typography color="text.secondary">{hackathon.description}</Typography>
             </Stack>
+              </CardContent>
+            </Card>
 
             <Card>
               <CardContent>

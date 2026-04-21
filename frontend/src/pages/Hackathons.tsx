@@ -18,14 +18,19 @@ export default function Hackathons() {
   return (
     <GridBackGroundLayout sx={{ alignItems: "stretch", py: 14 }}>
       <Stack spacing={3} sx={{ width: "min(1100px, 100%)", px: 2 }}>
-        <Box display="flex" justifyContent="space-between" alignItems="center" gap={2}>
-          <Typography variant="h3">Хакатоны</Typography>
+        <Card>
+          <CardContent sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
+            <Box>
+              <Typography variant="h3">Хакатоны</Typography>
+              <Typography color="text.secondary">Активные события, архив и черновики мероприятий</Typography>
+            </Box>
           {canCreateHackathon(user?.role) && (
             <Button component={Link} to="/admin" variant="contained">
               Создать
             </Button>
           )}
-        </Box>
+          </CardContent>
+        </Card>
 
         <Grid container spacing={2}>
           {hackathons.map((hackathon) => (

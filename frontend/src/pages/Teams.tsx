@@ -21,7 +21,12 @@ export default function Teams() {
   return (
     <GridBackGroundLayout sx={{ py: 14 }}>
       <Stack spacing={3} sx={{ width: "min(900px, 100%)", px: 2 }}>
-        <Typography variant="h3">Команды</Typography>
+        <Card>
+          <CardContent>
+            <Typography variant="h3">Команды</Typography>
+            <Typography color="text.secondary">Заявки, составы и модерация участников хакатона</Typography>
+          </CardContent>
+        </Card>
         {teams.map((team) => (
           <Card key={team.id}>
             <CardContent>

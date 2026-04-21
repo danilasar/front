@@ -12,6 +12,8 @@ export const CenterFullScreenLayout = ({ children, sx, ...props }: CenterFullScr
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
+      position: "relative",
+      overflow: "hidden",
     },
     ...(Array.isArray(sx) ? sx : [sx])
     ]} {...props}>

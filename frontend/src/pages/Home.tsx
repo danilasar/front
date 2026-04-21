@@ -1,4 +1,4 @@
-import { Button, Chip, Stack, SvgIcon, Typography, useTheme } from "@mui/material";
+import { alpha, Box, Button, Card, CardContent, Chip, Stack, SvgIcon, Typography, useTheme } from "@mui/material";
 import Icon from "../assets/icon.svg?react"
 import { Link } from "react-router-dom";
 import { GridBackGroundLayout } from "../ui/GridBackGroundLayout";
@@ -16,14 +16,26 @@ export default function Home() {
   }, [dispatch]);
 
   return (
-    <GridBackGroundLayout sx={{ minWidth: '100vw', textAlign: "center" }}>
+    <GridBackGroundLayout sx={{ minWidth: '100vw', textAlign: "center", py: 14 }}>
+      <Card sx={{ width: "min(980px, 100%)", mx: 2, overflow: "hidden" }}>
+        <CardContent sx={{ p: { xs: 3, md: 7 }, position: "relative" }}>
+          <Box
+            sx={{
+              position: "absolute",
+              inset: 0,
+              pointerEvents: "none",
+              background: `linear-gradient(115deg, transparent 0%, ${alpha("#FFFFFF", 0.5)} 46%, transparent 58%)`,
+            }}
+          />
+          <Stack alignItems="center" spacing={2} sx={{ position: "relative" }}>
         <SvgIcon component={Icon} inheritViewBox
           sx={{
-            width: 100,
-            height: 100,
+            width: 112,
+            height: 112,
             fontSize: 'inherit',
             flexShrink: 0,
-            color: "#FFFFFF"
+            color: theme.palette.secondary.main,
+            filter: "drop-shadow(0 16px 24px rgba(0,126,174,0.26))",
           }} />
         <Typography variant="h2" sx={{ padding: 2 }}>
           Менеджер хакатонов
@@ -42,9 +54,7 @@ export default function Home() {
           <Button component={Link} to="/hackathons" variant="contained" sx={{
             borderRadius: "8px",
             px: 2.5,
-            boxShadow: 3,
             color: theme.palette.text.primary,
-            background: theme.palette.primary.main
           }}>
             Смотреть хакатоны
           </Button>
@@ -52,6 +62,9 @@ export default function Home() {
             Личный кабинет
           </Button>
         </Stack>
+          </Stack>
+        </CardContent>
+      </Card>
       </GridBackGroundLayout>
   );
 }
