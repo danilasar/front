@@ -5,7 +5,7 @@ import type { ApiError } from "../../api/type";
 import type { CreateTeamApplicationRequest, TeamStatus } from "../../domain/types";
 import { getErrorMessage } from "../../utils/errorTemplateMessage";
 import { setError, startLoading, stopLoading } from "../settings";
-import { setTeams, upsertTeam } from "./slice";
+import { setInvitationLinks, setTeams, upsertTeam } from "./slice";
 
 export const fetchTeams = createAsyncThunk(
   "teams/list",
@@ -32,6 +32,7 @@ export const createTeamApplication = createAsyncThunk(
       dispatch(startLoading());
       const response = await teamApi.createApplication(data.hackathonId, data.application);
       dispatch(upsertTeam(response.team));
+      dispatch(setInvitationLinks(response.invitationLinks));
       return response;
     } catch (e: unknown) {
       const error = e as AxiosError<ApiError>;

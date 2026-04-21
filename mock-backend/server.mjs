@@ -633,30 +633,60 @@ async function handleApi(req, res, url, path, body) {
     if (req.method === "POST") {
       requireUser(req, res);
       if (res.writableEnded) return;
+      const invitationLinks = [];
       const created = {
         id: randomUUID(),
         hackathonId: teamsMatch[1],
         name: body.name ?? "Новая команда",
         status: "submitted",
-        members: (body.members ?? []).map((member) => ({
-          id: randomUUID(),
-          user: member.kind === "existing_user" ? publicUser(users.find((item) => item.login === member.login) ?? users[2]) : null,
-          source: member.kind === "existing_user" ? "existing_user" : "invited_new_user",
-          login: member.login ?? null,
-          fullName: member.fullName ?? member.login ?? "Участник",
-          email: member.email ?? null,
-          captain: Boolean(member.captain),
-          status: member.kind === "existing_user" ? "active" : "pending_invitation",
-          invitation: member.kind === "new_user" ? invitations[0] : null,
-          profileFields: member.profileFields ?? {},
-        })),
+        members: (body.members ?? []).map((member) => {
+          const memberId = randomUUID();
+          const existingUser = member.kind === "existing_user"
+            ? users.find((item) => item.login === member.login) ?? users[2]
+            : null;
+          const invite = member.kind === "new_user"
+            ? {
+              token: `invite-${memberId.slice(0, 8)}`,
+              hackathonId: teamsMatch[1],
+              teamId: "",
+              memberId,
+              fullName: member.fullName,
+              email: member.email ?? null,
+              status: "pending",
+              prefilledProfileFields: member.profileFields ?? {},
+              expiresAt: "2026-12-31T23:59:59.000Z",
+            }
+            : null;
+          if (invite) {
+            invitations.push(invite);
+            invitationLinks.push({
+              memberId,
+              url: `http://127.0.0.1:${port}/invite/${invite.token}`,
+            });
+          }
+          return {
+            id: memberId,
+            user: existingUser ? publicUser(existingUser) : null,
+            source: member.kind === "existing_user" ? "existing_user" : "invited_new_user",
+            login: member.login ?? null,
+            fullName: existingUser?.fullName ?? member.fullName ?? member.login ?? "Участник",
+            email: member.email ?? null,
+            captain: Boolean(member.captain),
+            status: member.kind === "existing_user" ? "active" : "pending_invitation",
+            invitation: invite,
+            profileFields: member.profileFields ?? {},
+          };
+        }),
         submittedAt: now(),
         moderationReason: null,
         createdAt: now(),
         updatedAt: now(),
       };
+      created.members.forEach((member) => {
+        if (member.invitation) member.invitation.teamId = created.id;
+      });
       teams.push(created);
-      send(res, 201, { team: created, invitationLinks: [] });
+      send(res, 201, { team: created, invitationLinks });
       return;
     }
   }

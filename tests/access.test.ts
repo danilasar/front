@@ -12,6 +12,15 @@ import {
   validateHackathonForm,
   validateOrganizerForm,
 } from "../frontend/src/domain/adminForms.ts";
+import {
+  buildInvitationLinkViews,
+  changeMemberKind,
+  createEmptyExistingMember,
+  createEmptyNewMember,
+  normalizeCaptain,
+  toTeamApplicationRequest,
+  validateTeamApplicationForm,
+} from "../frontend/src/domain/teamForms.ts";
 import type { Hackathon, UserProfile } from "../frontend/src/domain/types.ts";
 
 const hackathon = (organizerIds: string[]): Pick<Hackathon, "organizerIds"> => ({
@@ -114,4 +123,116 @@ test("форма хакатона преобразуется в OpenAPI payload"
   assert.equal(payload.landing?.heroTitle, "Летний хакатон");
   assert.match(payload.startsAt, /^2026-06-01T/);
   assert.match(payload.endsAt, /^2026-06-03T/);
+});
+
+test("форма команды требует одного капитана и соблюдает лимиты", () => {
+  const invalid = validateTeamApplicationForm({
+    name: "A",
+    members: [
+      { ...createEmptyExistingMember("one"), login: "alice" },
+      { ...createEmptyExistingMember("two"), login: "bob" },
+    ],
+  }, 3, 5);
+
+  assert.equal(invalid.valid, false);
+  assert.equal(invalid.errors.includes("Минимум участников: 3"), true);
+  assert.equal(invalid.errors.includes("В команде должен быть ровно один капитан"), true);
+});
+
+test("выбор капитана нормализует флаги участников", () => {
+  const members = normalizeCaptain([
+    { ...createEmptyExistingMember("one"), login: "alice", captain: true },
+    { ...createEmptyNewMember("two"), fullName: "Bob", captain: false },
+  ], "two");
+
+  assert.equal(members[0].captain, false);
+  assert.equal(members[1].captain, true);
+});
+
+test("смена типа участника очищает поля другого сценария и сохраняет капитана", () => {
+  const changed = changeMemberKind({
+    ...createEmptyNewMember("one"),
+    fullName: "Bob",
+    email: "bob@example.test",
+    education: "Университет",
+    course: "2",
+    captain: true,
+  }, "existing_user");
+
+  assert.equal(changed.kind, "existing_user");
+  assert.equal(changed.fullName, "");
+  assert.equal(changed.email, "");
+  assert.equal(changed.captain, true);
+});
+
+test("форма команды преобразует существующих и новых участников в OpenAPI payload", () => {
+  const payload = toTeamApplicationRequest({
+    name: "  Aero Team  ",
+    members: [
+      {
+        ...createEmptyExistingMember("one"),
+        login: " alice ",
+        captain: true,
+      },
+      {
+        ...createEmptyNewMember("two"),
+        fullName: "  Bob Newbie  ",
+        email: " bob@example.test ",
+        education: "  Университет  ",
+        course: "  2  ",
+      },
+    ],
+  });
+
+  assert.equal(payload.name, "Aero Team");
+  assert.deepEqual(payload.members[0], {
+    kind: "existing_user",
+    login: "alice",
+    captain: true,
+  });
+  assert.deepEqual(payload.members[1], {
+    kind: "new_user",
+    fullName: "Bob Newbie",
+    email: "bob@example.test",
+    captain: false,
+    profileFields: {
+      education: "Университет",
+      course: "2",
+    },
+  });
+});
+
+test("ссылки приглашений получают подписи из созданной команды", () => {
+  const views = buildInvitationLinkViews({
+    invitationLinks: [{ memberId: "member-1", url: "http://localhost/invite/token" }],
+    team: {
+      id: "team-1",
+      hackathonId: "hackathon-1",
+      name: "Aero Team",
+      status: "submitted",
+      members: [
+        {
+          id: "member-1",
+          user: null,
+          source: "invited_new_user",
+          login: null,
+          fullName: "Bob Newbie",
+          email: "bob@example.test",
+          captain: false,
+          status: "pending_invitation",
+          profileFields: {},
+        },
+      ],
+      submittedAt: "2026-06-01T00:00:00.000Z",
+      moderationReason: null,
+      createdAt: "2026-06-01T00:00:00.000Z",
+      updatedAt: "2026-06-01T00:00:00.000Z",
+    },
+  });
+
+  assert.deepEqual(views, [{
+    memberId: "member-1",
+    label: "Bob Newbie",
+    url: "http://localhost/invite/token",
+  }]);
 });

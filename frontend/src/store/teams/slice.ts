@@ -1,9 +1,10 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import type { Team } from "../../domain/types";
+import type { Team, TeamApplicationResponse } from "../../domain/types";
 import type { TeamsState } from "./types";
 
 const initialState: TeamsState = {
   items: [],
+  lastInvitationLinks: [],
 };
 
 const teamsSlice = createSlice({
@@ -21,8 +22,14 @@ const teamsSlice = createSlice({
         state.items[index] = action.payload;
       }
     },
+    setInvitationLinks: (state, action: PayloadAction<TeamApplicationResponse["invitationLinks"]>) => {
+      state.lastInvitationLinks = action.payload;
+    },
+    clearInvitationLinks: (state) => {
+      state.lastInvitationLinks = [];
+    },
   },
 });
 
-export const { setTeams, upsertTeam } = teamsSlice.actions;
+export const { clearInvitationLinks, setInvitationLinks, setTeams, upsertTeam } = teamsSlice.actions;
 export default teamsSlice.reducer;

@@ -3,7 +3,7 @@ import type { AxiosError, AxiosInstance } from "axios";
 import type { ApiError, RetryAxiosRequestConfig } from "./type";
 
 const api: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? "/api/v1",
+  baseURL: import.meta.env?.VITE_API_URL ?? "/api/v1",
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
@@ -11,6 +11,8 @@ const api: AxiosInstance = axios.create({
 });
 
 api.interceptors.request.use((config) => {
+  if (typeof sessionStorage === "undefined") return config;
+
   const token = sessionStorage.getItem("accessToken");
 
   if (token) {
@@ -30,6 +32,8 @@ api.interceptors.response.use(
       && !originalRequest.url?.includes("/auth/refresh")
     ) {
       originalRequest._retry = true;
+
+      if (typeof sessionStorage === "undefined") return Promise.reject(error);
 
       const oldRefreshToken = sessionStorage.getItem("refreshToken");
       if (!oldRefreshToken) {
