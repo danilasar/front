@@ -1,0 +1,2119 @@
+openapi: 3.0.3
+info:
+  title: API менеджера хакатонов
+  version: 1.0.0
+  description: >
+    Целевой API-контракт для реализации frontend и backend платформы управления
+    хакатонами. Контракт нормализует требования из project.md и заменяет старые
+    учебные ручки auth/user/quotes единым REST API.
+servers:
+  - url: http://127.0.0.1:8000/api/v1
+    description: Local backend
+  - url: /api/v1
+    description: Same-origin deployment
+tags:
+  - name: Auth
+  - name: Users
+  - name: Admin
+  - name: Hackathons
+  - name: Organizers
+  - name: Form Fields
+  - name: Registrations
+  - name: Teams
+  - name: Invitations
+  - name: Feedback
+  - name: Files
+  - name: Exports
+
+security:
+  - bearerAuth: []
+
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Регистрация пользователя
+      security: []
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: Пользователь зарегистрирован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Вход пользователя
+      security: []
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Успешный вход
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Обновление access и refresh token
+      security: []
+      operationId: refreshTokens
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshTokenRequest"
+      responses:
+        "200":
+          description: Токены обновлены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenPair"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Выход и инвалидирование refresh token
+      operationId: logout
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshTokenRequest"
+      responses:
+        "204":
+          description: Пользователь вышел
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /users/me:
+    get:
+      tags: [Users]
+      summary: Текущий пользователь
+      operationId: getCurrentUser
+      responses:
+        "200":
+          description: Профиль текущего пользователя
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    patch:
+      tags: [Users]
+      summary: Частичное обновление профиля текущего пользователя
+      operationId: updateCurrentUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserProfileRequest"
+      responses:
+        "200":
+          description: Профиль обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /users/{userId}:
+    get:
+      tags: [Users]
+      summary: Получить пользователя по id
+      operationId: getUserById
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      responses:
+        "200":
+          description: Пользователь найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserPublic"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /admin/organizers:
+    get:
+      tags: [Admin, Organizers]
+      summary: Список организаторов
+      operationId: listOrganizers
+      x-roles: [admin]
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+        - name: q
+          in: query
+          schema:
+            type: string
+          description: Поиск по ФИО, email или логину
+      responses:
+        "200":
+          description: Страница организаторов
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserPage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      tags: [Admin, Organizers]
+      summary: Создать учетную запись организатора
+      operationId: createOrganizer
+      x-roles: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrganizerRequest"
+      responses:
+        "201":
+          description: Организатор создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /admin/organizers/{organizerId}:
+    patch:
+      tags: [Admin, Organizers]
+      summary: Обновить учетную запись организатора
+      operationId: updateOrganizer
+      x-roles: [admin]
+      parameters:
+        - $ref: "#/components/parameters/OrganizerId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOrganizerRequest"
+      responses:
+        "200":
+          description: Организатор обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /admin/hackathons/{hackathonId}/organizers:
+    get:
+      tags: [Admin, Organizers, Hackathons]
+      summary: Организаторы, назначенные на хакатон
+      operationId: listHackathonOrganizers
+      x-roles: [admin]
+      parameters:
+        - $ref: "#/components/parameters/HackathonId"
+      responses:
+        "200":
+          description: Список организаторов хакатона
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserPublic"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [Admin, Organizers, Hackathons]
+      summary: Заменить список организаторов хакатона
+      operationId: replaceHackathonOrganizers
+      x-roles: [admin]
+      parameters:
+        - $ref: "#/components/parameters/HackathonId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignOrganizersRequest"
+      responses:
+        "200":
+          description: Назначения обновлены
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserPublic"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /admin/hackathons/{hackathonId}/organizers/{organizerId}:
+    put:
+      tags: [Admin, Organizers, Hackathons]
+      summary: Назначить организатора на хакатон
+      operationId: assignHackathonOrganizer
+      x-roles: [admin]
+      parameters:
+        - $ref: "#/components/parameters/HackathonId"
+        - $ref: "#/components/parameters/OrganizerId"
+      responses:
+        "204":
+          description: Организатор назначен
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [Admin, Organizers, Hackathons]
+      summary: Снять организатора с хакатона
+      operationId: unassignHackathonOrganizer
+      x-roles: [admin]
+      parameters:
+        - $ref: "#/components/parameters/HackathonId"
+        - $ref: "#/components/parameters/OrganizerId"
+      responses:
+        "204":
+          description: Организатор снят с хакатона
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /hackathons:
+    get:
+      tags: [Hackathons]
+      summary: Список хакатонов
+      operationId: listHackathons
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/HackathonStatus"
+        - name: q
+          in: query
+          schema:
+            type: string
+          description: Поиск по названию
+      responses:
+        "200":
+          description: Страница хакатонов
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HackathonPage"
+    post:
+      tags: [Hackathons]
+      summary: Создать хакатон административно
+      operationId: createHackathon
+      security:
+        - bearerAuth: []
+      x-roles: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateHackathonRequest"
+      responses:
+        "201":
+          description: Хакатон создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Hackathon"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /hackathons/active:
+    get:
+      tags: [Hackathons]
+      summary: Активный хакатон
+      operationId: getActiveHackathon
+      security: []
+      responses:
+        "200":
+          description: Активный хакатон
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Hackathon"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /hackathons/{hackathonId}:
+    get:
+      tags: [Hackathons]
+      summary: Детали хакатона
+      operationId: getHackathon
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/HackathonId"
+      responses:
+        "200":
+          description: Хакатон
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Hackathon"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Hackathons]
+      summary: Обновить хакатон
+      operationId: updateHackathon
+      x-roles: [assigned_organizer]
+      parameters:
+        - $ref: "#/components/parameters/HackathonId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateHackathonRequest"
+      responses:
+        "200":
+          description: Хакатон обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Hackathon"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [Hackathons]
+      summary: Удалить хакатон административно
+      operationId: deleteHackathon
+      x-roles: [admin]
+      parameters:
+        - $ref: "#/components/parameters/HackathonId"
+      responses:
+        "204":
+          description: Хакатон удален
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /hackathons/{hackathonId}/activate:
+    post:
+      tags: [Hackathons]
+      summary: Сделать хакатон активным административно
+      operationId: activateHackathon
+      x-roles: [admin]
+      parameters:
+        - $ref: "#/components/parameters/HackathonId"
+      responses:
+        "200":
+          description: Хакатон активирован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Hackathon"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /hackathons/{hackathonId}/rules:
+    put:
+      tags: [Hackathons, Files]
+      summary: Загрузить или заменить PDF регламента
+      operationId: uploadHackathonRules
+      x-roles: [assigned_organizer]
+      parameters:
+        - $ref: "#/components/parameters/HackathonId"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: PDF-файл регламента
+      responses:
+        "200":
+          description: Регламент загружен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileAsset"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "415":
+          $ref: "#/components/responses/UnsupportedMediaType"
+
+  /hackathons/{hackathonId}/form-fields:
+    get:
+      tags: [Form Fields]
+      summary: Поля динамической формы хакатона
+      operationId: listHackathonFormFields
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/HackathonId"
+        - name: scope
+          in: query
+          schema:
+            $ref: "#/components/schemas/FormFieldScope"
+      responses:
+        "200":
+          description: Список полей формы
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FormField"
+    post:
+      tags: [Form Fields]
+      summary: Добавить поле формы
+      operationId: createHackathonFormField
+      x-roles: [assigned_organizer]
+      parameters:
+        - $ref: "#/components/parameters/HackathonId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateFormFieldRequest"
+      responses:
+        "201":
+          description: Поле создано
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FormField"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /hackathons/{hackathonId}/form-fields/{fieldId}:
+    patch:
+      tags: [Form Fields]
+      summary: Обновить поле формы
+      operationId: updateHackathonFormField
+      x-roles: [assigned_organizer]
+      parameters:
+        - $ref: "#/components/parameters/HackathonId"
+        - $ref: "#/components/parameters/FieldId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateFormFieldRequest"
+      responses:
+        "200":
+          description: Поле обновлено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FormField"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [Form Fields]
+      summary: Скрыть или удалить поле формы
+      operationId: deleteHackathonFormField
+      x-roles: [assigned_organizer]
+      parameters:
+        - $ref: "#/components/parameters/HackathonId"
+        - $ref: "#/components/parameters/FieldId"
+      responses:
+        "204":
+          description: Поле удалено или скрыто
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /hackathons/{hackathonId}/registrations:
+    get:
+      tags: [Registrations]
+      summary: Таблица заявок команд
+      operationId: listRegistrations
+      x-roles: [assigned_organizer]
+      parameters:
+        - $ref: "#/components/parameters/HackathonId"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/TeamStatus"
+      responses:
+        "200":
+          description: Страница заявок
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegistrationPage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /hackathons/{hackathonId}/teams:
+    get:
+      tags: [Teams]
+      summary: Список команд хакатона
+      operationId: listTeams
+      parameters:
+        - $ref: "#/components/parameters/HackathonId"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/TeamStatus"
+      responses:
+        "200":
+          description: Страница команд
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamPage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags: [Teams, Registrations]
+      summary: Подать заявку и создать команду
+      operationId: createTeamApplication
+      parameters:
+        - $ref: "#/components/parameters/HackathonId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTeamApplicationRequest"
+      responses:
+        "201":
+          description: Команда создана, заявка подана
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamApplicationResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /hackathons/{hackathonId}/teams/me:
+    get:
+      tags: [Teams]
+      summary: Моя команда на хакатоне
+      operationId: getMyTeam
+      parameters:
+        - $ref: "#/components/parameters/HackathonId"
+      responses:
+        "200":
+          description: Команда текущего пользователя
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Team"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /hackathons/{hackathonId}/teams/{teamId}:
+    get:
+      tags: [Teams]
+      summary: Детали команды
+      operationId: getTeam
+      parameters:
+        - $ref: "#/components/parameters/HackathonId"
+        - $ref: "#/components/parameters/TeamId"
+      responses:
+        "200":
+          description: Команда
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Team"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Teams]
+      summary: Обновить команду
+      description: Капитан может менять название и состав своей команды. Организатор может менять любую команду.
+      operationId: updateTeam
+      parameters:
+        - $ref: "#/components/parameters/HackathonId"
+        - $ref: "#/components/parameters/TeamId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTeamRequest"
+      responses:
+        "200":
+          description: Команда обновлена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Team"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+    delete:
+      tags: [Teams]
+      summary: Удалить команду или снять ее с соревнования
+      operationId: deleteTeam
+      parameters:
+        - $ref: "#/components/parameters/HackathonId"
+        - $ref: "#/components/parameters/TeamId"
+      responses:
+        "204":
+          description: Команда удалена или снята
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /hackathons/{hackathonId}/teams/{teamId}/status:
+    patch:
+      tags: [Teams, Registrations]
+      summary: Изменить статус команды
+      operationId: updateTeamStatus
+      x-roles: [assigned_organizer]
+      parameters:
+        - $ref: "#/components/parameters/HackathonId"
+        - $ref: "#/components/parameters/TeamId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTeamStatusRequest"
+      responses:
+        "200":
+          description: Статус изменен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Team"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /hackathons/{hackathonId}/teams/{teamId}/members/{memberId}:
+    delete:
+      tags: [Teams]
+      summary: Удалить участника из команды
+      operationId: removeTeamMember
+      parameters:
+        - $ref: "#/components/parameters/HackathonId"
+        - $ref: "#/components/parameters/TeamId"
+        - $ref: "#/components/parameters/MemberId"
+      responses:
+        "204":
+          description: Участник удален
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /hackathons/{hackathonId}/teams/{teamId}/members/{memberId}/captain:
+    put:
+      tags: [Teams]
+      summary: Назначить капитана команды
+      operationId: setTeamCaptain
+      parameters:
+        - $ref: "#/components/parameters/HackathonId"
+        - $ref: "#/components/parameters/TeamId"
+        - $ref: "#/components/parameters/MemberId"
+      responses:
+        "200":
+          description: Капитан назначен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Team"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /hackathons/{hackathonId}/teams/{teamId}/members/{memberId}/disqualify:
+    post:
+      tags: [Teams]
+      summary: Дисквалифицировать участника
+      operationId: disqualifyTeamMember
+      x-roles: [assigned_organizer]
+      parameters:
+        - $ref: "#/components/parameters/HackathonId"
+        - $ref: "#/components/parameters/TeamId"
+        - $ref: "#/components/parameters/MemberId"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ModerationReasonRequest"
+      responses:
+        "200":
+          description: Участник дисквалифицирован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Team"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /invitations/{inviteToken}:
+    get:
+      tags: [Invitations]
+      summary: Получить данные приглашения
+      operationId: getInvitation
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/InviteToken"
+      responses:
+        "200":
+          description: Приглашение найдено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invitation"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "410":
+          $ref: "#/components/responses/Gone"
+
+  /invitations/{inviteToken}/accept-existing:
+    post:
+      tags: [Invitations]
+      summary: Принять приглашение существующим аккаунтом
+      operationId: acceptInvitationExistingUser
+      parameters:
+        - $ref: "#/components/parameters/InviteToken"
+      responses:
+        "200":
+          description: Приглашение принято
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Team"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "410":
+          $ref: "#/components/responses/Gone"
+
+  /invitations/{inviteToken}/complete-registration:
+    post:
+      tags: [Invitations]
+      summary: Завершить регистрацию нового участника по приглашению
+      operationId: completeInvitationRegistration
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/InviteToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompleteInvitationRegistrationRequest"
+      responses:
+        "201":
+          description: Аккаунт создан и присоединен к команде
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "410":
+          $ref: "#/components/responses/Gone"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /hackathons/{hackathonId}/feedback:
+    get:
+      tags: [Feedback]
+      summary: Список ответов обратной связи
+      operationId: listFeedback
+      x-roles: [assigned_organizer]
+      parameters:
+        - $ref: "#/components/parameters/HackathonId"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: Страница ответов
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedbackPage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      tags: [Feedback]
+      summary: Отправить обратную связь
+      operationId: submitFeedback
+      parameters:
+        - $ref: "#/components/parameters/HackathonId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitFeedbackRequest"
+      responses:
+        "201":
+          description: Ответ сохранен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedbackResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /files:
+    post:
+      tags: [Files]
+      summary: Загрузить файл для динамического поля формы
+      operationId: uploadFile
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: Файл загружен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileAsset"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "413":
+          description: Файл слишком большой
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "415":
+          $ref: "#/components/responses/UnsupportedMediaType"
+
+  /files/{fileId}:
+    get:
+      tags: [Files]
+      summary: Получить метаданные файла
+      operationId: getFile
+      parameters:
+        - $ref: "#/components/parameters/FileId"
+      responses:
+        "200":
+          description: Файл
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileAsset"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /hackathons/{hackathonId}/exports/teams:
+    get:
+      tags: [Exports]
+      summary: Экспорт команд и заявок
+      operationId: exportTeams
+      x-roles: [assigned_organizer]
+      parameters:
+        - $ref: "#/components/parameters/HackathonId"
+        - name: format
+          in: query
+          required: true
+          schema:
+            $ref: "#/components/schemas/ExportFormat"
+      responses:
+        "200":
+          description: Файл экспорта
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PageSize:
+      name: pageSize
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    UserId:
+      name: userId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    OrganizerId:
+      name: organizerId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    HackathonId:
+      name: hackathonId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    TeamId:
+      name: teamId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    MemberId:
+      name: memberId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    FieldId:
+      name: fieldId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    FileId:
+      name: fileId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    InviteToken:
+      name: inviteToken
+      in: path
+      required: true
+      schema:
+        type: string
+
+  responses:
+    BadRequest:
+      description: Некорректный запрос
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Unauthorized:
+      description: Не авторизован
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Forbidden:
+      description: Недостаточно прав
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Conflict:
+      description: Конфликт состояния
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Gone:
+      description: Ресурс больше недоступен
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    UnsupportedMediaType:
+      description: Неподдерживаемый тип файла
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    ValidationError:
+      description: Ошибка валидации
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ValidationErrorResponse"
+
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          examples: [unauthorized]
+        message:
+          type: string
+          examples: [Не авторизован]
+
+    ValidationErrorResponse:
+      allOf:
+        - $ref: "#/components/schemas/ErrorResponse"
+        - type: object
+          required: [fields]
+          properties:
+            fields:
+              type: array
+              items:
+                type: object
+                required: [field, message]
+                properties:
+                  field:
+                    type: string
+                  message:
+                    type: string
+
+    Role:
+      type: string
+      enum: [participant, organizer, admin]
+      description: >
+        Глобальная роль пользователя. Администратор управляет объектами вне
+        хакатонов, организатор получает права внутри только тех хакатонов, на
+        которые назначен. Пользователь с role=admin может также быть назначен
+        организатором конкретного хакатона.
+
+    RegisterRequest:
+      type: object
+      required: [email, password, fullName]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        fullName:
+          type: string
+          minLength: 2
+        avatarFileId:
+          type: string
+          format: uuid
+          nullable: true
+
+    CreateOrganizerRequest:
+      type: object
+      required: [email, password, fullName]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        fullName:
+          type: string
+          minLength: 2
+        phone:
+          type: string
+          nullable: true
+
+    UpdateOrganizerRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        fullName:
+          type: string
+          minLength: 2
+        phone:
+          type: string
+          nullable: true
+        blocked:
+          type: boolean
+
+    AssignOrganizersRequest:
+      type: object
+      required: [organizerIds]
+      properties:
+        organizerIds:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    RefreshTokenRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken:
+          type: string
+
+    TokenPair:
+      type: object
+      required: [accessToken, refreshToken]
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+
+    AuthResponse:
+      type: object
+      required: [user, tokens]
+      properties:
+        user:
+          $ref: "#/components/schemas/UserProfile"
+        tokens:
+          $ref: "#/components/schemas/TokenPair"
+
+    UserPublic:
+      type: object
+      required: [id, fullName, role]
+      properties:
+        id:
+          type: string
+          format: uuid
+        login:
+          type: string
+          description: Автоматически сгенерированный уникальный логин
+        fullName:
+          type: string
+        role:
+          $ref: "#/components/schemas/Role"
+        avatar:
+          $ref: "#/components/schemas/FileAsset"
+          nullable: true
+
+    UserProfile:
+      allOf:
+        - $ref: "#/components/schemas/UserPublic"
+        - type: object
+          required: [email, profileFields, createdAt, updatedAt]
+          properties:
+            email:
+              type: string
+              format: email
+            education:
+              type: string
+              nullable: true
+            course:
+              type: string
+              nullable: true
+            phone:
+              type: string
+              nullable: true
+            telegram:
+              type: string
+              nullable: true
+            vk:
+              type: string
+              nullable: true
+            foodAllergies:
+              type: string
+              nullable: true
+            tshirtSize:
+              $ref: "#/components/schemas/TShirtSize"
+              nullable: true
+            profileFields:
+              $ref: "#/components/schemas/DynamicFieldValues"
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+
+    UserPage:
+      allOf:
+        - $ref: "#/components/schemas/PageMeta"
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/UserProfile"
+
+    UpdateUserProfileRequest:
+      type: object
+      properties:
+        fullName:
+          type: string
+          minLength: 2
+        education:
+          type: string
+          nullable: true
+        course:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        telegram:
+          type: string
+          nullable: true
+        vk:
+          type: string
+          nullable: true
+        foodAllergies:
+          type: string
+          nullable: true
+        tshirtSize:
+          $ref: "#/components/schemas/TShirtSize"
+          nullable: true
+        avatarFileId:
+          type: string
+          format: uuid
+          nullable: true
+        profileFields:
+          $ref: "#/components/schemas/DynamicFieldValues"
+
+    TShirtSize:
+      type: string
+      enum: [XS, S, M, L, XL, XXL]
+
+    HackathonStatus:
+      type: string
+      enum: [draft, active, archived]
+
+    Hackathon:
+      type: object
+      required:
+        - id
+        - title
+        - status
+        - startsAt
+        - endsAt
+        - minTeamSize
+        - maxTeamSize
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        status:
+          $ref: "#/components/schemas/HackathonStatus"
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: string
+          format: date-time
+        registrationOpensAt:
+          type: string
+          format: date-time
+          nullable: true
+        registrationClosesAt:
+          type: string
+          format: date-time
+          nullable: true
+        minTeamSize:
+          type: integer
+          minimum: 1
+        maxTeamSize:
+          type: integer
+          minimum: 1
+          maximum: 20
+        rulesFile:
+          $ref: "#/components/schemas/FileAsset"
+          nullable: true
+        organizerIds:
+          type: array
+          description: >
+            Пользователи, назначенные администратором организаторами этого
+            хакатона. Внутреннее управление хакатоном разрешено только этим
+            пользователям. Admin может присутствовать в этом списке.
+          items:
+            type: string
+            format: uuid
+        landing:
+          $ref: "#/components/schemas/HackathonLanding"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    HackathonLanding:
+      type: object
+      properties:
+        heroTitle:
+          type: string
+        heroSubtitle:
+          type: string
+        coverFileId:
+          type: string
+          format: uuid
+          nullable: true
+        content:
+          type: string
+          description: Markdown или HTML, выбранный backend-ом как безопасный формат
+
+    CreateHackathonRequest:
+      type: object
+      required: [title, startsAt, endsAt, minTeamSize, maxTeamSize]
+      properties:
+        title:
+          type: string
+          minLength: 2
+        description:
+          type: string
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: string
+          format: date-time
+        registrationOpensAt:
+          type: string
+          format: date-time
+          nullable: true
+        registrationClosesAt:
+          type: string
+          format: date-time
+          nullable: true
+        minTeamSize:
+          type: integer
+          minimum: 1
+        maxTeamSize:
+          type: integer
+          minimum: 1
+          maximum: 20
+        landing:
+          $ref: "#/components/schemas/HackathonLanding"
+
+    UpdateHackathonRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 2
+        description:
+          type: string
+          nullable: true
+        status:
+          $ref: "#/components/schemas/HackathonStatus"
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: string
+          format: date-time
+        registrationOpensAt:
+          type: string
+          format: date-time
+          nullable: true
+        registrationClosesAt:
+          type: string
+          format: date-time
+          nullable: true
+        minTeamSize:
+          type: integer
+          minimum: 1
+        maxTeamSize:
+          type: integer
+          minimum: 1
+          maximum: 20
+        landing:
+          $ref: "#/components/schemas/HackathonLanding"
+
+    HackathonPage:
+      allOf:
+        - $ref: "#/components/schemas/PageMeta"
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/Hackathon"
+
+    FormFieldScope:
+      type: string
+      enum: [profile, registration, feedback]
+
+    FormFieldType:
+      type: string
+      enum:
+        - text
+        - textarea
+        - email
+        - phone
+        - url
+        - date
+        - datetime
+        - time
+        - checkbox
+        - radio
+        - select
+        - file
+
+    FormFieldOption:
+      type: object
+      required: [value, label]
+      properties:
+        value:
+          type: string
+        label:
+          type: string
+
+    FormFieldValidation:
+      type: object
+      properties:
+        minLength:
+          type: integer
+          minimum: 0
+        maxLength:
+          type: integer
+          minimum: 1
+        pattern:
+          type: string
+        min:
+          type: number
+        max:
+          type: number
+        allowedMimeTypes:
+          type: array
+          items:
+            type: string
+        maxFileSizeBytes:
+          type: integer
+          minimum: 1
+
+    FormField:
+      type: object
+      required: [id, hackathonId, scope, key, label, type, required, visible, order]
+      properties:
+        id:
+          type: string
+          format: uuid
+        hackathonId:
+          type: string
+          format: uuid
+        scope:
+          $ref: "#/components/schemas/FormFieldScope"
+        key:
+          type: string
+          pattern: "^[a-zA-Z][a-zA-Z0-9_]*$"
+        label:
+          type: string
+        description:
+          type: string
+          nullable: true
+        type:
+          $ref: "#/components/schemas/FormFieldType"
+        required:
+          type: boolean
+        visible:
+          type: boolean
+          description: Скрытые поля не показываются на фронтенде, но история значений сохраняется
+        order:
+          type: integer
+        options:
+          type: array
+          items:
+            $ref: "#/components/schemas/FormFieldOption"
+        validation:
+          $ref: "#/components/schemas/FormFieldValidation"
+
+    CreateFormFieldRequest:
+      type: object
+      required: [scope, key, label, type]
+      properties:
+        scope:
+          $ref: "#/components/schemas/FormFieldScope"
+        key:
+          type: string
+        label:
+          type: string
+        description:
+          type: string
+          nullable: true
+        type:
+          $ref: "#/components/schemas/FormFieldType"
+        required:
+          type: boolean
+          default: false
+        visible:
+          type: boolean
+          default: true
+        order:
+          type: integer
+          default: 0
+        options:
+          type: array
+          items:
+            $ref: "#/components/schemas/FormFieldOption"
+        validation:
+          $ref: "#/components/schemas/FormFieldValidation"
+
+    UpdateFormFieldRequest:
+      type: object
+      properties:
+        label:
+          type: string
+        description:
+          type: string
+          nullable: true
+        required:
+          type: boolean
+        visible:
+          type: boolean
+        order:
+          type: integer
+        options:
+          type: array
+          items:
+            $ref: "#/components/schemas/FormFieldOption"
+        validation:
+          $ref: "#/components/schemas/FormFieldValidation"
+
+    DynamicFieldValue:
+      oneOf:
+        - type: string
+        - type: number
+        - type: boolean
+        - type: array
+          items:
+            type: string
+
+    DynamicFieldValues:
+      type: object
+      additionalProperties:
+        $ref: "#/components/schemas/DynamicFieldValue"
+      description: Значения динамических полей по ключу FormField.key
+
+    TeamStatus:
+      type: string
+      enum: [draft, submitted, admitted, rejected, disqualified, withdrawn]
+
+    TeamMemberSource:
+      type: string
+      enum: [existing_user, invited_new_user]
+
+    TeamMember:
+      type: object
+      required: [id, source, fullName, captain, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Id членства в команде
+        user:
+          $ref: "#/components/schemas/UserPublic"
+          nullable: true
+        source:
+          $ref: "#/components/schemas/TeamMemberSource"
+        login:
+          type: string
+          nullable: true
+          description: Логин существующего пользователя
+        fullName:
+          type: string
+        email:
+          type: string
+          format: email
+          nullable: true
+        captain:
+          type: boolean
+        status:
+          type: string
+          enum: [active, pending_invitation, disqualified]
+        invitation:
+          $ref: "#/components/schemas/Invitation"
+          nullable: true
+        profileFields:
+          $ref: "#/components/schemas/DynamicFieldValues"
+
+    Team:
+      type: object
+      required: [id, hackathonId, name, status, members, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        hackathonId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        status:
+          $ref: "#/components/schemas/TeamStatus"
+        members:
+          type: array
+          items:
+            $ref: "#/components/schemas/TeamMember"
+        submittedAt:
+          type: string
+          format: date-time
+          nullable: true
+        moderationReason:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ExistingUserMemberInput:
+      type: object
+      required: [login]
+      properties:
+        login:
+          type: string
+        captain:
+          type: boolean
+          default: false
+
+    NewUserMemberInput:
+      type: object
+      required: [fullName]
+      properties:
+        fullName:
+          type: string
+        email:
+          type: string
+          format: email
+          nullable: true
+        captain:
+          type: boolean
+          default: false
+        profileFields:
+          $ref: "#/components/schemas/DynamicFieldValues"
+
+    ExistingUserTeamMemberInput:
+      allOf:
+        - type: object
+          required: [kind]
+          properties:
+            kind:
+              type: string
+              enum: [existing_user]
+        - $ref: "#/components/schemas/ExistingUserMemberInput"
+
+    NewUserTeamMemberInput:
+      allOf:
+        - type: object
+          required: [kind]
+          properties:
+            kind:
+              type: string
+              enum: [new_user]
+        - $ref: "#/components/schemas/NewUserMemberInput"
+
+    TeamMemberInput:
+      oneOf:
+        - $ref: "#/components/schemas/ExistingUserTeamMemberInput"
+        - $ref: "#/components/schemas/NewUserTeamMemberInput"
+      discriminator:
+        propertyName: kind
+        mapping:
+          existing_user: "#/components/schemas/ExistingUserTeamMemberInput"
+          new_user: "#/components/schemas/NewUserTeamMemberInput"
+
+    CreateTeamApplicationRequest:
+      type: object
+      required: [name, members]
+      properties:
+        name:
+          type: string
+          minLength: 2
+        members:
+          type: array
+          minItems: 1
+          maxItems: 20
+          items:
+            $ref: "#/components/schemas/TeamMemberInput"
+
+    TeamApplicationResponse:
+      type: object
+      required: [team]
+      properties:
+        team:
+          $ref: "#/components/schemas/Team"
+        invitationLinks:
+          type: array
+          items:
+            type: object
+            required: [memberId, url]
+            properties:
+              memberId:
+                type: string
+                format: uuid
+              url:
+                type: string
+                format: uri
+
+    UpdateTeamRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+        members:
+          type: array
+          minItems: 1
+          maxItems: 20
+          items:
+            $ref: "#/components/schemas/TeamMemberInput"
+
+    UpdateTeamStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          $ref: "#/components/schemas/TeamStatus"
+        reason:
+          type: string
+          nullable: true
+
+    ModerationReasonRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          nullable: true
+
+    TeamPage:
+      allOf:
+        - $ref: "#/components/schemas/PageMeta"
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/Team"
+
+    Registration:
+      type: object
+      required: [team, submittedAt]
+      properties:
+        team:
+          $ref: "#/components/schemas/Team"
+        submittedAt:
+          type: string
+          format: date-time
+
+    RegistrationPage:
+      allOf:
+        - $ref: "#/components/schemas/PageMeta"
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/Registration"
+
+    Invitation:
+      type: object
+      required: [token, hackathonId, teamId, memberId, fullName, status, expiresAt]
+      properties:
+        token:
+          type: string
+        hackathonId:
+          type: string
+          format: uuid
+        teamId:
+          type: string
+          format: uuid
+        memberId:
+          type: string
+          format: uuid
+        fullName:
+          type: string
+        email:
+          type: string
+          format: email
+          nullable: true
+        status:
+          type: string
+          enum: [pending, accepted, expired, revoked]
+        prefilledProfileFields:
+          $ref: "#/components/schemas/DynamicFieldValues"
+        expiresAt:
+          type: string
+          format: date-time
+
+    CompleteInvitationRegistrationRequest:
+      type: object
+      required: [email, password, fullName]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        fullName:
+          type: string
+        profileFields:
+          $ref: "#/components/schemas/DynamicFieldValues"
+
+    SubmitFeedbackRequest:
+      type: object
+      required: [fields]
+      properties:
+        fields:
+          $ref: "#/components/schemas/DynamicFieldValues"
+
+    FeedbackResponse:
+      type: object
+      required: [id, hackathonId, userId, fields, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        hackathonId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        fields:
+          $ref: "#/components/schemas/DynamicFieldValues"
+        createdAt:
+          type: string
+          format: date-time
+
+    FeedbackPage:
+      allOf:
+        - $ref: "#/components/schemas/PageMeta"
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/FeedbackResponse"
+
+    FileAsset:
+      type: object
+      required: [id, url, originalName, mimeType, sizeBytes, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        url:
+          type: string
+          format: uri
+        originalName:
+          type: string
+        mimeType:
+          type: string
+        sizeBytes:
+          type: integer
+          minimum: 0
+        createdAt:
+          type: string
+          format: date-time
+
+    ExportFormat:
+      type: string
+      enum: [csv, xlsx]
+
+    PageMeta:
+      type: object
+      required: [page, pageSize, total]
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        pageSize:
+          type: integer
+          minimum: 1
+        total:
+          type: integer
+          minimum: 0
