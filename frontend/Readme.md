@@ -15,7 +15,8 @@ Implemented user-facing scenarios:
 - add new team members and receive invite links;
 - view team applications in a status-filtered table;
 - moderate teams by admitting, rejecting, or disqualifying them;
-- disqualify individual team members.
+- disqualify individual team members;
+- export team applications to CSV and XLSX.
 
 Implemented admin scenarios:
 

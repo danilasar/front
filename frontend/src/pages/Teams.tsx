@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import BlockIcon from "@mui/icons-material/Block";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import LinkIcon from "@mui/icons-material/Link";
 import PersonAddAltIcon from "@mui/icons-material/PersonAddAlt";
 import ReportGmailerrorredIcon from "@mui/icons-material/ReportGmailerrorred";
@@ -61,6 +62,16 @@ import {
   teamStatusOptions,
   type TeamStatusFilter,
 } from "../domain/teamModeration";
+import { buildTeamsCsv, buildTeamsXlsx } from "../domain/teamExport";
+
+const downloadBlob = (blob: Blob, filename: string) => {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+};
 
 export default function Teams() {
   const { hackathonId } = useParams();
@@ -185,6 +196,14 @@ export default function Teams() {
   const handleDisqualifyMember = async (teamId: string, memberId: string) => {
     if (!hackathonId) return;
     await dispatch(disqualifyTeamMember({ hackathonId, teamId, memberId }));
+  };
+
+  const handleExportCsv = () => {
+    downloadBlob(new Blob([buildTeamsCsv(teams)], { type: "text/csv;charset=utf-8" }), "teams.csv");
+  };
+
+  const handleExportXlsx = () => {
+    downloadBlob(buildTeamsXlsx(teams), "teams.xlsx");
   };
 
   return (
@@ -360,19 +379,39 @@ export default function Teams() {
                     Статусы команд, составы, капитаны и модерация участников
                   </Typography>
                 </Box>
-                <FormControl sx={{ minWidth: 220 }}>
-                  <InputLabel id="team-status-filter-label">Статус</InputLabel>
-                  <Select
-                    labelId="team-status-filter-label"
-                    label="Статус"
-                    value={statusFilter}
-                    onChange={(event) => setStatusFilter(event.target.value as TeamStatusFilter)}
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                  <Button
+                    type="button"
+                    variant="outlined"
+                    startIcon={<FileDownloadOutlinedIcon />}
+                    disabled={teams.length === 0}
+                    onClick={handleExportCsv}
                   >
-                    {teamStatusOptions.map((option) => (
-                      <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                    CSV
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outlined"
+                    startIcon={<FileDownloadOutlinedIcon />}
+                    disabled={teams.length === 0}
+                    onClick={handleExportXlsx}
+                  >
+                    XLSX
+                  </Button>
+                  <FormControl sx={{ minWidth: 220 }}>
+                    <InputLabel id="team-status-filter-label">Статус</InputLabel>
+                    <Select
+                      labelId="team-status-filter-label"
+                      label="Статус"
+                      value={statusFilter}
+                      onChange={(event) => setStatusFilter(event.target.value as TeamStatusFilter)}
+                    >
+                      {teamStatusOptions.map((option) => (
+                        <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Stack>
               </Box>
 
               <Alert severity={managementAccess.allowed ? "success" : "info"}>
