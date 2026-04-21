@@ -28,6 +28,11 @@ import {
   teamStatusLabels,
 } from "../frontend/src/domain/teamModeration.ts";
 import { buildTeamExportRows, buildTeamsCsv, buildTeamsXlsx } from "../frontend/src/domain/teamExport.ts";
+import {
+  filterHackathons,
+  formatHackathonPeriod,
+  hackathonStatusLabels,
+} from "../frontend/src/domain/hackathonManagement.ts";
 import type { Hackathon, Team, UserProfile } from "../frontend/src/domain/types.ts";
 
 const hackathon = (organizerIds: string[]): Pick<Hackathon, "organizerIds"> => ({
@@ -339,4 +344,35 @@ test("экспорт XLSX создает OpenXML zip blob", async () => {
   assert.equal(bytes[1], 0x4B);
   assert.equal(bytes[2], 0x03);
   assert.equal(bytes[3], 0x04);
+});
+
+const fullHackathon = (id: string, status: Hackathon["status"]): Hackathon => ({
+  id,
+  title: `Hackathon ${id}`,
+  description: null,
+  status,
+  startsAt: "2026-06-01T00:00:00.000Z",
+  endsAt: "2026-06-03T00:00:00.000Z",
+  registrationOpensAt: null,
+  registrationClosesAt: null,
+  minTeamSize: 1,
+  maxTeamSize: 5,
+  rulesFile: null,
+  organizerIds: [],
+  landing: {},
+  createdAt: "2026-05-01T00:00:00.000Z",
+  updatedAt: "2026-05-01T00:00:00.000Z",
+});
+
+test("админские helpers фильтруют архив хакатонов и форматируют период", () => {
+  const hackathons = [
+    fullHackathon("draft", "draft"),
+    fullHackathon("active", "active"),
+    fullHackathon("archived", "archived"),
+  ];
+
+  assert.deepEqual(filterHackathons(hackathons, "all").map((item) => item.id), ["draft", "active", "archived"]);
+  assert.deepEqual(filterHackathons(hackathons, "archived").map((item) => item.id), ["archived"]);
+  assert.equal(hackathonStatusLabels.active, "Активный");
+  assert.match(formatHackathonPeriod(hackathons[0]), /01\.06\.2026 - 03\.06\.2026/);
 });

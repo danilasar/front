@@ -78,6 +78,11 @@ export const hackathonApi = {
     return response.data;
   },
 
+  async activate(id: string) {
+    const response = await api.post<Hackathon>(`/hackathons/${id}/activate`);
+    return response.data;
+  },
+
   async fields(id: string, scope?: string) {
     const response = await api.get<FormField[]>(`/hackathons/${id}/form-fields`, {
       params: { scope },

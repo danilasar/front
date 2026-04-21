@@ -563,7 +563,10 @@ async function handleApi(req, res, url, path, body) {
     const hackathon = hackathons.find((item) => item.id === activateMatch[1]);
     if (!hackathon) return notFound(res);
     hackathons.forEach((item) => {
-      if (item.status === "active") item.status = "archived";
+      if (item.status === "active") {
+        item.status = "archived";
+        item.updatedAt = now();
+      }
     });
     hackathon.status = "active";
     hackathon.updatedAt = now();

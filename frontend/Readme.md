@@ -24,7 +24,9 @@ Implemented admin scenarios:
 - create hackathons;
 - assign an organizer during hackathon creation;
 - assign organizers to existing hackathons;
-- view organizers and hackathons.
+- view organizers and hackathons;
+- filter hackathons by status and archive;
+- switch the active hackathon.
 
 The visual direction is Frutiger Aero: glass panels, blue/green/white air gradients, water/sky motifs, translucent controls, and icon-led actions.
 

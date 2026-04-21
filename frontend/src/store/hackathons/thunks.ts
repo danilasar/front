@@ -75,6 +75,25 @@ export const createHackathon = createAsyncThunk(
   },
 );
 
+export const activateHackathon = createAsyncThunk(
+  "hackathons/activate",
+  async (id: string, { dispatch }) => {
+    try {
+      dispatch(startLoading());
+      const response = await hackathonApi.activate(id);
+      dispatch(upsertHackathon(response));
+      dispatch(setActiveHackathon(response));
+      return response;
+    } catch (e: unknown) {
+      const error = e as AxiosError<ApiError>;
+      dispatch(setError(getErrorMessage(error)));
+      return null;
+    } finally {
+      dispatch(stopLoading());
+    }
+  },
+);
+
 export const fetchFormFields = createAsyncThunk(
   "hackathons/fields",
   async (data: { hackathonId: string; scope?: string }, { dispatch }) => {

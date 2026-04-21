@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
+import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
+import BoltOutlinedIcon from "@mui/icons-material/BoltOutlined";
 import {
   Alert,
   Box,
   Button,
   Card,
   CardContent,
+  Chip,
   FormControl,
   InputLabel,
   MenuItem,
@@ -15,7 +18,7 @@ import {
 import { GridBackGroundLayout } from "../ui/GridBackGroundLayout";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { assignOrganizer, createOrganizer, fetchOrganizers } from "../store/admin";
-import { createHackathon, fetchHackathons } from "../store/hackathons";
+import { activateHackathon, createHackathon, fetchHackathons } from "../store/hackathons";
 import { InputTextField } from "../ui/InputTextField";
 import {
   toHackathonRequest,
@@ -25,6 +28,13 @@ import {
   type HackathonFormValues,
   type OrganizerFormValues,
 } from "../domain/adminForms";
+import {
+  filterHackathons,
+  formatHackathonPeriod,
+  hackathonStatusLabels,
+  hackathonStatusOptions,
+  type HackathonStatusFilter,
+} from "../domain/hackathonManagement";
 
 const initialOrganizerForm: OrganizerFormValues = {
   fullName: "",
@@ -53,6 +63,7 @@ export default function AdminPanel() {
   const [organizerForm, setOrganizerForm] = useState(initialOrganizerForm);
   const [hackathonForm, setHackathonForm] = useState(initialHackathonForm);
   const [assignment, setAssignment] = useState({ hackathonId: "", organizerId: "" });
+  const [hackathonStatusFilter, setHackathonStatusFilter] = useState<HackathonStatusFilter>("all");
   const [errors, setErrors] = useState<string[]>([]);
 
   useEffect(() => {
@@ -63,6 +74,11 @@ export default function AdminPanel() {
   const organizerOptions = useMemo(
     () => organizers.map((organizer) => ({ id: organizer.id, label: `${organizer.fullName} · ${organizer.email}` })),
     [organizers],
+  );
+
+  const filteredHackathons = useMemo(
+    () => filterHackathons(hackathons, hackathonStatusFilter),
+    [hackathons, hackathonStatusFilter],
   );
 
   const handleCreateOrganizer = async (event: React.FormEvent) => {
@@ -110,6 +126,14 @@ export default function AdminPanel() {
     await dispatch(fetchHackathons());
     setAssignment({ hackathonId: "", organizerId: "" });
     setErrors([]);
+  };
+
+  const handleActivateHackathon = async (hackathonId: string) => {
+    const activated = await dispatch(activateHackathon(hackathonId)).unwrap();
+    if (activated) {
+      await dispatch(fetchHackathons());
+      setErrors([]);
+    }
   };
 
   return (
@@ -279,13 +303,50 @@ export default function AdminPanel() {
           </Stack>
 
           <Stack spacing={2}>
-            <Typography variant="h5">Хакатоны</Typography>
-            {hackathons.map((hackathon) => (
+            <Box display="flex" justifyContent="space-between" gap={2} flexWrap="wrap" alignItems="center">
+              <Box>
+                <Typography variant="h5">Хакатоны</Typography>
+                <Typography color="text.secondary">Список, архив и активное событие</Typography>
+              </Box>
+              <FormControl sx={{ minWidth: 180 }}>
+                <InputLabel id="hackathon-status-filter-label">Статус</InputLabel>
+                <Select
+                  labelId="hackathon-status-filter-label"
+                  label="Статус"
+                  value={hackathonStatusFilter}
+                  onChange={(event) => setHackathonStatusFilter(event.target.value as HackathonStatusFilter)}
+                >
+                  {hackathonStatusOptions.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+            {filteredHackathons.map((hackathon) => (
               <Card key={hackathon.id}>
                 <CardContent>
-                  <Typography variant="h6">{hackathon.title}</Typography>
-                  <Typography color="text.secondary">{hackathon.status}</Typography>
-                  <Typography>Организаторов назначено: {hackathon.organizerIds.length}</Typography>
+                  <Stack spacing={1.5}>
+                    <Box display="flex" justifyContent="space-between" gap={1} flexWrap="wrap">
+                      <Typography variant="h6">{hackathon.title}</Typography>
+                      <Chip
+                        label={hackathonStatusLabels[hackathon.status]}
+                        color={hackathon.status === "active" ? "secondary" : "default"}
+                        icon={hackathon.status === "archived" ? <ArchiveOutlinedIcon /> : undefined}
+                      />
+                    </Box>
+                    <Typography color="text.secondary">{formatHackathonPeriod(hackathon)}</Typography>
+                    <Typography>Организаторов назначено: {hackathon.organizerIds.length}</Typography>
+                    <Button
+                      variant="outlined"
+                      startIcon={<BoltOutlinedIcon />}
+                      disabled={hackathon.status === "active"}
+                      onClick={() => {
+                        void handleActivateHackathon(hackathon.id);
+                      }}
+                    >
+                      Сделать активным
+                    </Button>
+                  </Stack>
                 </CardContent>
               </Card>
             ))}
