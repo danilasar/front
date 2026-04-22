@@ -16,8 +16,10 @@ import {
   CardContent,
   Chip,
   FormControl,
+  FormControlLabel,
   InputLabel,
   MenuItem,
+  Checkbox,
   Select,
   Stack,
   Table,
@@ -52,6 +54,7 @@ import {
   type TeamMemberFormValues,
 } from "../domain/teamForms";
 import { fetchHackathon } from "../store/hackathons";
+import { fetchFormFields } from "../store/hackathons";
 import { explainHackathonManagementAccess } from "../domain/access";
 import {
   formatTeamDate,
@@ -63,6 +66,8 @@ import {
   type TeamStatusFilter,
 } from "../domain/teamModeration";
 import { buildTeamsCsv, buildTeamsXlsx } from "../domain/teamExport";
+import { emptyFieldValue, prepareTeamFieldValues, validateRequiredTeamFields } from "../domain/teamFieldValues";
+import type { DynamicFieldValue, FormField } from "../domain/types";
 
 const downloadBlob = (blob: Blob, filename: string) => {
   const url = URL.createObjectURL(blob);
@@ -78,9 +83,11 @@ export default function Teams() {
   const dispatch = useAppDispatch();
   const teams = useAppSelector((state) => state.teams.items);
   const hackathon = useAppSelector((state) => state.hackathons.current);
+  const fields = useAppSelector((state) => state.hackathons.fields);
   const user = useAppSelector((state) => state.auth.user);
   const [form, setForm] = useState<TeamApplicationFormValues>({
     name: "",
+    fields: {},
     members: [
       {
         ...createEmptyExistingMember("captain"),
@@ -104,6 +111,7 @@ export default function Teams() {
   useEffect(() => {
     if (!hackathonId) return;
     void dispatch(fetchHackathon(hackathonId));
+    void dispatch(fetchFormFields({ hackathonId, scope: "team" }));
   }, [dispatch, hackathonId]);
 
   const minTeamSize = hackathon?.minTeamSize ?? 1;
@@ -152,6 +160,65 @@ export default function Teams() {
     }));
   };
 
+  const visibleTeamFields = fields.filter((field) => field.visible);
+
+  const updateTeamField = (key: string, value: DynamicFieldValue) => {
+    setForm((prev) => ({
+      ...prev,
+      fields: { ...prev.fields, [key]: value },
+    }));
+  };
+
+  const renderTeamField = (field: FormField) => {
+    const value = form.fields[field.key] ?? emptyFieldValue(field);
+    const label = `${field.label}${field.required ? " *" : ""}`;
+
+    if (field.type === "select" || field.type === "radio") {
+      return (
+        <FormControl key={field.id} fullWidth>
+          <InputLabel id={`team-field-${field.id}`}>{label}</InputLabel>
+          <Select
+            labelId={`team-field-${field.id}`}
+            label={label}
+            value={typeof value === "string" ? value : ""}
+            onChange={(event) => updateTeamField(field.key, event.target.value)}
+          >
+            {field.options.map((option) => (
+              <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      );
+    }
+
+    if (field.type === "checkbox") {
+      return (
+        <FormControlLabel
+          key={field.id}
+          control={(
+            <Checkbox
+              checked={Boolean(value)}
+              onChange={(event) => updateTeamField(field.key, event.target.checked)}
+            />
+          )}
+          label={label}
+        />
+      );
+    }
+
+    return (
+      <InputTextField
+        key={field.id}
+        label={label}
+        value={typeof value === "string" ? value : ""}
+        type={field.type === "email" || field.type === "url" ? field.type : "text"}
+        multiline={field.type === "textarea"}
+        minRows={field.type === "textarea" ? 3 : undefined}
+        onChange={(event) => updateTeamField(field.key, event.target.value)}
+      />
+    );
+  };
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!hackathonId) return;
@@ -161,12 +228,18 @@ export default function Teams() {
       setErrors(validation.errors);
       return;
     }
+    const preparedFields = prepareTeamFieldValues(visibleTeamFields, form.fields);
+    const fieldErrors = validateRequiredTeamFields(visibleTeamFields, preparedFields);
+    if (fieldErrors.length > 0) {
+      setErrors(fieldErrors);
+      return;
+    }
 
     dispatch(clearInvitationLinks());
     setInviteViews([]);
     const response = await dispatch(createTeamApplication({
       hackathonId,
-      application: toTeamApplicationRequest(form),
+      application: toTeamApplicationRequest(form, preparedFields),
     })).unwrap();
 
     if (response) {
@@ -174,6 +247,7 @@ export default function Teams() {
       setInviteViews(buildInvitationLinkViews(response));
       setForm({
         name: "",
+        fields: {},
         members: [{ ...createEmptyExistingMember("captain"), captain: true }],
       });
     }
@@ -257,6 +331,13 @@ export default function Teams() {
                 value={form.name}
                 onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
               />
+
+              {visibleTeamFields.length > 0 && (
+                <Stack spacing={2}>
+                  <Typography variant="h6">Поля команды</Typography>
+                  {visibleTeamFields.map(renderTeamField)}
+                </Stack>
+              )}
 
               <Stack spacing={2}>
                 {form.members.map((member, index) => (

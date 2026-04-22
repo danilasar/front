@@ -156,6 +156,7 @@ export type Team = {
   name: string;
   status: TeamStatus;
   members: TeamMember[];
+  fields: DynamicFieldValues;
   submittedAt: string | null;
   moderationReason: string | null;
   createdAt: string;
@@ -178,6 +179,7 @@ export type TeamMemberInput =
 
 export type CreateTeamApplicationRequest = {
   name: string;
+  fields?: DynamicFieldValues;
   members: TeamMemberInput[];
 };
 

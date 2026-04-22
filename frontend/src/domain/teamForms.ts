@@ -1,4 +1,4 @@
-import type { CreateTeamApplicationRequest, TeamApplicationResponse, TeamMemberInput } from "./types";
+import type { CreateTeamApplicationRequest, DynamicFieldValues, TeamApplicationResponse, TeamMemberInput } from "./types";
 
 export type TeamMemberFormValues = {
   id: string;
@@ -13,6 +13,7 @@ export type TeamMemberFormValues = {
 
 export type TeamApplicationFormValues = {
   name: string;
+  fields: DynamicFieldValues;
   members: TeamMemberFormValues[];
 };
 
@@ -98,8 +99,12 @@ export const validateTeamApplicationForm = (
   return { valid: errors.length === 0, errors };
 };
 
-export const toTeamApplicationRequest = (values: TeamApplicationFormValues): CreateTeamApplicationRequest => ({
+export const toTeamApplicationRequest = (
+  values: TeamApplicationFormValues,
+  fields: DynamicFieldValues = values.fields,
+): CreateTeamApplicationRequest => ({
   name: values.name.trim(),
+  fields,
   members: values.members.map<TeamMemberInput>((member) => {
     if (member.kind === "existing_user") {
       return {

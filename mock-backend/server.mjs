@@ -104,6 +104,7 @@ const teams = [
     hackathonId: ids.hackathon,
     name: "Команда Демо",
     status: "submitted",
+    fields: {},
     members: [
       {
         id: ids.member,
@@ -669,6 +670,7 @@ async function handleApi(req, res, url, path, body) {
         hackathonId: teamsMatch[1],
         name: body.name ?? "Новая команда",
         status: "submitted",
+        fields: body.fields ?? {},
         members: (body.members ?? []).map((member) => {
           const memberId = randomUUID();
           const existingUser = member.kind === "existing_user"

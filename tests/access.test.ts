@@ -39,7 +39,11 @@ import {
   toTeamFieldRequest,
   validateTeamFieldForm,
 } from "../frontend/src/domain/teamFieldForms.ts";
-import type { Hackathon, Team, UserProfile } from "../frontend/src/domain/types.ts";
+import {
+  prepareTeamFieldValues,
+  validateRequiredTeamFields,
+} from "../frontend/src/domain/teamFieldValues.ts";
+import type { FormField, Hackathon, Team, UserProfile } from "../frontend/src/domain/types.ts";
 
 const hackathon = (organizerIds: string[]): Pick<Hackathon, "organizerIds"> => ({
   organizerIds,
@@ -228,6 +232,7 @@ test("ссылки приглашений получают подписи из �
       hackathonId: "hackathon-1",
       name: "Aero Team",
       status: "submitted",
+      fields: {},
       members: [
         {
           id: "member-1",
@@ -299,6 +304,7 @@ const exportTeam: Team = {
   hackathonId: "hackathon-1",
   name: "Aero Team",
   status: "admitted",
+  fields: { track: "backend" },
   members: [
     {
       id: "member-1",
@@ -440,4 +446,44 @@ test("форма поля команды готовит payload", () => {
     ],
     validation: {},
   });
+});
+
+const teamField = (input: Partial<FormField>): FormField => ({
+  id: input.id ?? "field-1",
+  hackathonId: "hackathon-1",
+  scope: "team",
+  key: input.key ?? "track",
+  label: input.label ?? "Трек",
+  description: null,
+  type: input.type ?? "text",
+  required: input.required ?? false,
+  visible: input.visible ?? true,
+  order: 1,
+  options: [],
+  validation: {},
+});
+
+test("значения полей команды подготавливаются и валидируются", () => {
+  const fields = [
+    teamField({ key: "track", label: "Трек", required: true }),
+    teamField({ key: "remote", label: "Удаленно", type: "checkbox", required: true }),
+    teamField({ key: "hidden", label: "Скрыто", visible: false }),
+  ];
+
+  assert.deepEqual(prepareTeamFieldValues(fields, {
+    track: " backend ",
+    remote: true,
+    hidden: "ignored",
+  }), {
+    track: "backend",
+    remote: true,
+  });
+
+  assert.deepEqual(validateRequiredTeamFields(fields, {
+    track: "",
+    remote: false,
+  }), [
+    "Заполните поле команды: Трек",
+    "Заполните поле команды: Удаленно",
+  ]);
 });

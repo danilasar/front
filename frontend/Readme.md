@@ -11,6 +11,7 @@ Implemented user-facing scenarios:
 - register and log in;
 - view profile;
 - submit a team application;
+- fill configured team fields in an application;
 - add existing team members by login;
 - add new team members and receive invite links;
 - view team applications in a status-filtered table;
