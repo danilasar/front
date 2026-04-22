@@ -496,7 +496,10 @@ API-адаптеры находятся в `src/api/hackathonApi.ts`:
 
 ## Тесты
 
-Тесты лежат в `tests/access.test.ts`.
+Тесты лежат в:
+
+- `tests/access.test.ts`;
+- `tests/apiAdapters.test.ts`.
 
 Сейчас покрыто:
 
@@ -517,6 +520,7 @@ API-адаптеры находятся в `src/api/hackathonApi.ts`:
 - helpers конструктора полей команды: key, label, options, payload.
 - helpers значений полей команды: trim, required validation, payload fields.
 - helpers invite onboarding: предзаполнение формы, валидация, payload завершения регистрации.
+- API adapter tests для auth, admin, hackathons, teams, invitations и exports.
 
 Проверки перед последним документированием:
 
@@ -550,19 +554,19 @@ npm run build
 - дисквалификация отдельных участников из UI;
 - скачивание CSV/XLSX через backend export endpoint;
 - удален legacy quote/user код из исходного шаблона;
-- доменные тесты формы доступа, админки, команд и invite onboarding.
+- доменные тесты формы доступа, админки, команд и invite onboarding;
+- API adapter tests для `hackathonApi`.
 
 Не готово:
 
 - компонентные тесты ключевых форм;
-- полноценные API adapter tests.
+- сверка DTO с `openapi.yaml` и typed helpers для ошибок.
 
 ## Следующий План
 
-Наиболее логичный следующий блок - стабилизация API-слоя:
+Наиболее логичный следующий блок - завершение стабилизации API-слоя:
 
-1. Добавить API adapter tests для `hackathonApi`: auth, hackathons, teams, admin, invitations, exports.
-2. Сверить DTO с `openapi.yaml` и добавить typed helpers для ошибок API.
-3. После стабилизации контрактов добавить компонентные тесты ключевых форм.
+1. Сверить DTO с `openapi.yaml` и добавить typed helpers для ошибок API.
+2. После стабилизации контрактов добавить компонентные тесты ключевых форм.
 
-Практически лучше начать с API adapter tests: legacy шум уже убран, теперь можно фиксировать контрактные ожидания без лишних зависимостей от старого шаблона.
+Практически лучше продолжить с typed error helpers: адаптеры уже покрыты базовыми контрактными тестами, теперь нужно унифицировать обработку ошибок.

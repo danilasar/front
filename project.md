@@ -158,18 +158,16 @@ Redux/API: подключены слайсы `auth`, `settings`, `hackathons`, `
 
 Доменные helpers: `frontend/src/domain/access.ts`, `adminForms.ts`, `teamForms.ts`, `teamModeration.ts`, `hackathonManagement.ts`, `rulesUpload.ts`, `teamFieldForms.ts`, `teamFieldValues.ts`, `inviteForms.ts` покрывают правила доступа, валидацию, преобразование form values в payload, отображение модерационных данных, фильтрацию хакатонов, проверку PDF-регламента, конструктор полей команды, значения этих полей в заявке и invite onboarding.
 
-Тесты: `tests/access.test.ts` покрывает правила доступа, формы админки и формы командной заявки. Перед документированием проходили `npm run lint`, `npm test`, `npm run build`.
+Тесты: `tests/access.test.ts` покрывает правила доступа, формы админки и формы командной заявки; `tests/apiAdapters.test.ts` покрывает базовые контракты API-адаптеров. Перед документированием проходили `npm run lint`, `npm test`, `npm run build`.
 
 8.2. Не готово
 
-API adapter tests и компонентные тесты ключевых форм.
+Typed helpers для ошибок API и компонентные тесты ключевых форм.
 
 8.3. Рекомендуемый следующий блок
 
 Следующим лучше брать стабилизацию контрактов:
 
-1. добавить API adapter tests для `hackathonApi`;
+1. синхронизировать DTO с `openapi.yaml` и добавить typed helpers для ошибок;
 
-2. синхронизировать DTO с `openapi.yaml` и добавить typed helpers для ошибок;
-
-3. после этого добавить компонентные тесты для ключевых форм.
+2. после этого добавить компонентные тесты для ключевых форм.
