@@ -91,9 +91,9 @@ pub fn get_all_routes(state: AppState) -> Router<AppState> {
         .nest("/auth", auth_router)
         .nest("/users", user_router)
         .nest("/hackathons", hackathon_router)
+        .nest("/hackathons/{hackathon_id}/teams", team_router)
+        .nest("/hackathons/{hackathon_id}/form-fields", form_router)
         .nest("/admin", admin_router)
-        .nest("/teams", team_router)
-        .nest("/forms", form_router)
         .nest("/invitations", invitation_router)
         .merge(misc_router);
 

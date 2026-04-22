@@ -1,6 +1,6 @@
 use sqlx::Postgres;
 use uuid::Uuid;
-use chrono::{DateTime, Utc, Duration};
+use chrono::{Utc, Duration};
 
 pub trait InvitationRepository {
     async fn create(&self, team_member_id: Uuid) -> sqlx::Result<String>;

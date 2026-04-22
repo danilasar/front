@@ -22,8 +22,8 @@ pub enum TeamMemberRole {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, sqlx::Type, ToSchema, PartialEq)]
-#[sqlx(type_name = "text", rename_all = "lowercase")]
-#[serde(rename_all = "lowercase")]
+#[sqlx(type_name = "text", rename_all = "snake_case")]
+#[serde(rename_all = "snake_case")]
 pub enum TeamMemberStatus {
     Active,
     PendingInvitation,

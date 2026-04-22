@@ -13,6 +13,7 @@ use crate::{
     models::users::Role,
     repositories::{is_unique_violation, users::UserRepository},
     schemas::users::{RegisterUser, UserProfile},
+    services::auth::hashing::hash,
 };
 
 pub struct AdminRouter;
@@ -66,10 +67,18 @@ async fn create_organizer(
     State(state): State<AppState>,
     Json(payload): Json<RegisterUser>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    match state
-        .user_repo
-        .create_admin(state.user_repo.db_pool.as_ref(), payload)
-        .await
+    match sqlx::query_as::<_, crate::models::users::User>(
+        "INSERT INTO users (id, full_name, email, role, password_hash, phone, profile_fields)
+        VALUES ($1, $2, $3, 'organizer', $4, $5, '{}'::jsonb)
+        RETURNING id, full_name, email, role, password_hash, education, course, phone, telegram, vk, food_allergies, tshirt_size, avatar_file_id, profile_fields, created_at, updated_at",
+    )
+    .bind(Uuid::new_v4())
+    .bind(payload.full_name)
+    .bind(payload.email)
+    .bind(hash(&payload.password))
+    .bind(Option::<String>::None)
+    .fetch_one(state.user_repo.db_pool.as_ref())
+    .await
     {
         Ok(user) => Ok((StatusCode::CREATED, Json(UserProfile::from(user)))),
         Err(error) if is_unique_violation(&error) => Err(StatusCode::CONFLICT),

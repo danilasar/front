@@ -11,8 +11,9 @@ use uuid::Uuid;
 
 use crate::{
     config::AppState,
+    models::hackathons::Hackathon,
     repositories::hackathons::HackathonRepository,
-    schemas::hackathons::{HackathonResponse, CreateHackathonRequest},
+    schemas::hackathons::{CreateHackathonRequest, FileAsset, HackathonResponse},
 };
 
 pub struct HackathonRouter;
@@ -24,6 +25,30 @@ struct Page<T> {
     page_size: u32,
     total: usize,
     items: Vec<T>,
+}
+
+async fn organizer_ids_for(state: &AppState, hackathon_id: Uuid) -> Result<Vec<Uuid>, StatusCode> {
+    sqlx::query_scalar::<_, Uuid>(
+        "SELECT user_id FROM hackathon_organizers WHERE hackathon_id = $1 ORDER BY user_id"
+    )
+    .bind(hackathon_id)
+    .fetch_all(state.hackathon_repo.db_pool.as_ref())
+    .await
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+}
+
+async fn hackathon_response(state: &AppState, hackathon: Hackathon) -> Result<HackathonResponse, StatusCode> {
+    let mut response = HackathonResponse::from(hackathon);
+    response.organizer_ids = organizer_ids_for(state, response.id).await?;
+    Ok(response)
+}
+
+async fn hackathon_responses(state: &AppState, hackathons: Vec<Hackathon>) -> Result<Vec<HackathonResponse>, StatusCode> {
+    let mut responses = Vec::with_capacity(hackathons.len());
+    for hackathon in hackathons {
+        responses.push(hackathon_response(state, hackathon).await?);
+    }
+    Ok(responses)
 }
 
 impl HackathonRouter {
@@ -62,7 +87,7 @@ pub async fn list_hackathons(
     let repo = state.hackathon_repo.clone();
     match repo.get_all().await {
         Ok(h) => {
-            let items = h.into_iter().map(HackathonResponse::from).collect::<Vec<_>>();
+            let items = hackathon_responses(&state, h).await?;
             Ok(Json(Page {
                 page: 1,
                 page_size: items.len() as u32,
@@ -90,7 +115,7 @@ pub async fn create_hackathon(
 ) -> Result<impl IntoResponse, StatusCode> {
     let repo = state.hackathon_repo.clone();
     match repo.create(repo.db_pool.clone().as_ref(), payload).await {
-        Ok(h) => Ok((StatusCode::CREATED, Json(HackathonResponse::from(h)))),
+        Ok(h) => Ok((StatusCode::CREATED, Json(hackathon_response(&state, h).await?))),
         Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
     }
 }
@@ -109,7 +134,7 @@ pub async fn get_active_hackathon(
 ) -> Result<impl IntoResponse, StatusCode> {
     let repo = state.hackathon_repo.clone();
     match repo.get_active().await {
-        Ok(Some(h)) => Ok(Json(HackathonResponse::from(h))),
+        Ok(Some(h)) => Ok(Json(hackathon_response(&state, h).await?)),
         Ok(None) => Err(StatusCode::NOT_FOUND),
         Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
     }
@@ -133,7 +158,7 @@ pub async fn get_hackathon(
 ) -> Result<impl IntoResponse, StatusCode> {
     let repo = state.hackathon_repo.clone();
     match repo.get_by_id(&id).await {
-        Ok(Some(h)) => Ok(Json(HackathonResponse::from(h))),
+        Ok(Some(h)) => Ok(Json(hackathon_response(&state, h).await?)),
         Ok(None) => Err(StatusCode::NOT_FOUND),
         Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
     }
@@ -172,7 +197,7 @@ pub async fn update_hackathon(
     }
 
     match state.hackathon_repo.get_by_id(&id).await {
-        Ok(Some(h)) => Ok(Json(HackathonResponse::from(h))),
+        Ok(Some(h)) => Ok(Json(hackathon_response(&state, h).await?)),
         Ok(None) => Err(StatusCode::NOT_FOUND),
         Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
     }
@@ -218,7 +243,7 @@ pub async fn activate_hackathon(
     match repo.activate(&id).await {
         Ok(_) => {
             if let Ok(Some(h)) = repo.get_by_id(&id).await {
-                Ok((StatusCode::OK, Json(HackathonResponse::from(h))))
+                Ok((StatusCode::OK, Json(hackathon_response(&state, h).await?)))
             } else {
                 Err(StatusCode::INTERNAL_SERVER_ERROR)
             }
@@ -251,7 +276,7 @@ pub async fn upload_rules(
                 .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
              return match state.hackathon_repo.get_by_id(&id).await {
-                 Ok(Some(h)) => Ok(Json(HackathonResponse::from(h))),
+                 Ok(Some(h)) => Ok(Json(hackathon_response(&state, h).await?)),
                  Ok(None) => Err(StatusCode::NOT_FOUND),
                  Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
              };
