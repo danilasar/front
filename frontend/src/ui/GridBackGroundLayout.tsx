@@ -13,7 +13,7 @@ export const GridBackGroundLayout = ({ children, className, ...props }: CenterFu
       `}
       {...props}
     >
-      <div className="relative z-10 w-full">
+      <div className="relative z-10 flex w-full flex-col items-center">
         {children}
       </div>
     </CenterFullScreenLayout>

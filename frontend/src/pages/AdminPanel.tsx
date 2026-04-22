@@ -52,6 +52,8 @@ const initialHackathonForm: HackathonFormValues = {
   organizerId: "",
 };
 
+const NO_ORGANIZER_VALUE = "__no_organizer__";
+
 export default function AdminPanel() {
   const dispatch = useAppDispatch();
   const organizers = useAppSelector((state) => state.admin.organizers);
@@ -134,7 +136,7 @@ export default function AdminPanel() {
 
   return (
     <GridBackGroundLayout className="py-14">
-      <div className="w-full max-w-4xl px-2 space-y-6">
+      <div className="w-full max-w-5xl space-y-6">
         <Card>
           <CardContent className="pt-6">
             <div className="space-y-4">
@@ -234,12 +236,18 @@ export default function AdminPanel() {
                 </div>
                 <div>
                   <label className="text-sm font-medium text-foreground mb-1 block">Организатор</label>
-                  <Select value={hackathonForm.organizerId} onValueChange={(value) => setHackathonForm((prev) => ({ ...prev, organizerId: value }))}>
+                  <Select
+                    value={hackathonForm.organizerId || NO_ORGANIZER_VALUE}
+                    onValueChange={(value) => setHackathonForm((prev) => ({
+                      ...prev,
+                      organizerId: value === NO_ORGANIZER_VALUE ? "" : value,
+                    }))}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Выберите организатора" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Назначить позже</SelectItem>
+                      <SelectItem value={NO_ORGANIZER_VALUE}>Назначить позже</SelectItem>
                       {organizerOptions.map((option) => (
                         <SelectItem key={option.id} value={option.id}>{option.label}</SelectItem>
                       ))}
