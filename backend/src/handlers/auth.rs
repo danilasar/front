@@ -8,7 +8,7 @@ use axum::{
 use utoipa::OpenApi;
 
 use crate::{
-    AppState,
+    config::AppState,
     errors::{auth::AuthError, users::UserError},
     models::tokens::Tokens,
     repositories::{is_unique_violation, users::UserRepository},
@@ -141,7 +141,5 @@ pub async fn refresh(
     )
 )]
 pub async fn logout() -> impl IntoResponse {
-    // В простейшем случае на клиенте просто удаляется токен.
-    // На сервере можно добавить инвалидацию JTI в Redis, если нужно.
     StatusCode::NO_CONTENT
 }

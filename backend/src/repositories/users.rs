@@ -1,7 +1,8 @@
 use macroses::NewTypeDeref;
 use serde::Deserialize;
 use sqlx::{Executor, Pool, Postgres, postgres::PgQueryResult};
-use std::{ops::Deref, sync::Arc};
+use std::ops::Deref;
+use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::{models::users::{User, Role}, schemas::users::RegisterUser};
@@ -48,8 +49,8 @@ impl UserRepository for UserRepo<Postgres> {
             FROM users
             LIMIT $1 OFFSET $2"
         )
-        .bind(*limit.deref() as i64)
-        .bind(*offset.deref() as i64)
+        .bind(limit.0 as i64)
+        .bind(offset.0 as i64)
         .fetch_all(self.db_pool.as_ref())
         .await
     }

@@ -9,7 +9,7 @@ use utoipa::OpenApi;
 use uuid::Uuid;
 
 use crate::{
-    AppState,
+    config::AppState,
     repositories::hackathons::HackathonRepository,
     schemas::hackathons::{HackathonResponse, CreateHackathonRequest, FileAsset},
 };

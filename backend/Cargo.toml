@@ -11,7 +11,7 @@ cfg-if = "1.0.0"
 http = "1.3.1"
 tokio = { version = "1.45.0", features = ["full"] }
 tower = { version = "0.5.2", features = ["full"] }
-tower-http = { version = "0.6.4", features = ["full"] }
+tower-http = { version = "0.6.4", features = ["full", "cors"] }
 sqlx = { version = "0.8.6", features = ["postgres", "runtime-tokio", "uuid", "chrono"] }
 sha2 = "0.11.0"
 hex = "0.4.3"
@@ -29,3 +29,7 @@ tracing = "0.1.44"
 tracing-subscriber = {version = "0.3.23", features = ["env-filter"]}
 
 macroses = { path = "macroses" }
+
+[dev-dependencies]
+reqwest = { version = "0.12.12", features = ["json"] }
+tokio = { version = "1.45.0", features = ["full", "macros"] }

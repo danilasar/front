@@ -1,5 +1,5 @@
 use axum::{Router, routing::{get, post}, extract::{State, Path}, Json, http::StatusCode};
-use crate::{AppState, schemas::users::AuthResponse};
+use crate::{config::AppState, schemas::users::AuthResponse};
 use crate::repositories::invitations::InvitationRepository;
 use serde::{Deserialize, Serialize};
 
@@ -8,9 +8,9 @@ pub struct InvitationRouter;
 impl InvitationRouter {
     pub fn set_router() -> Router<AppState> {
         Router::new()
-            .route("/:token", get(get_invitation))
-            .route("/:token/accept-existing", post(accept_existing))
-            .route("/:token/complete-registration", post(complete_registration))
+            .route("/{token}", get(get_invitation))
+            .route("/{token}/accept-existing", post(accept_existing))
+            .route("/{token}/complete-registration", post(complete_registration))
     }
 }
 

@@ -1,5 +1,5 @@
 use axum::{Router, routing::{get, post, patch, delete}, extract::{State, Path}};
-use crate::AppState;
+use crate::config::AppState;
 
 pub struct FormRouter;
 
@@ -7,7 +7,7 @@ impl FormRouter {
     pub fn set_router() -> Router<AppState> {
         Router::new()
             .route("/", get(list_fields).post(create_field))
-            .route("/:field_id", patch(update_field).delete(delete_field))
+            .route("/{field_id}", patch(update_field).delete(delete_field))
     }
 }
 

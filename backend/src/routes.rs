@@ -4,6 +4,8 @@ use utoipa::{
     openapi::security::{HttpAuthScheme, HttpBuilder, SecurityScheme},
 };
 use utoipa_swagger_ui::SwaggerUi;
+use http::header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE};
+use tower_http::cors::{Any, CorsLayer};
 
 #[derive(OpenApi)]
 #[openapi(info(title = "Hackathon Manager API", version = "1.0.0"))]
@@ -22,6 +24,22 @@ use crate::{
         misc::MiscRouter,
     }, middlewares::{auth::auth_middleware, role::role_middleware}, models::users::Role,
 };
+
+pub fn create_app(state: AppState) -> Router {
+    let swagger_router = get_swagger_routes();
+    let all_routers = get_all_routes(state.clone());
+
+    Router::new()
+        .merge(all_routers)
+        .merge(swagger_router)
+        .with_state(state)
+        .layer(
+            CorsLayer::new()
+                .allow_origin(Any)
+                .allow_methods(Any)
+                .allow_headers([AUTHORIZATION, CONTENT_TYPE, ACCEPT]),
+        )
+}
 
 pub fn get_swagger_routes() -> SwaggerUi {
     let mut open_api = ApiDoc::openapi()
@@ -77,7 +95,7 @@ pub fn get_all_routes(state: AppState) -> Router<AppState> {
         .nest("/teams", team_router)
         .nest("/forms", form_router)
         .nest("/invitations", invitation_router)
-        .nest("/", misc_router);
+        .merge(misc_router);
 
     Router::new().nest("/api/v1", api_router)
 }

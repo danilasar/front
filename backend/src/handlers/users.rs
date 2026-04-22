@@ -10,10 +10,10 @@ use utoipa::OpenApi;
 use uuid::Uuid;
 
 use crate::{
-    AppState,
+    config::AppState,
     errors::users::UserError,
     middlewares::{auth::auth_middleware, role::role_middleware},
-    models::users::{Role, User},
+    models::users::{Role},
     repositories::{
         users::UserRepository,
     },
@@ -28,7 +28,7 @@ impl UserRouter {
         Router::new()
             .route("/me", get(me))
             .route("/me", patch(update_me))
-            .route("/:id", get(get_user_by_id))
+            .route("/{id}", get(get_user_by_id))
             .route_layer(from_fn(move |req, next| async move {
                 role_middleware(req, next, Role::all()).await
             }))

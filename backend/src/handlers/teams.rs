@@ -1,7 +1,7 @@
 use axum::{Router, routing::{get, post, patch, delete}, extract::{State, Path}, Json, http::StatusCode, Extension};
 use utoipa::ToSchema;
 use uuid::Uuid;
-use crate::{AppState, services::auth::tokens::Claims};
+use crate::{config::AppState, services::auth::tokens::Claims};
 use crate::models::teams::{Team};
 use crate::models::team_members::{TeamMemberRole, TeamMemberStatus};
 use crate::repositories::teams::TeamRepository;
@@ -18,9 +18,9 @@ impl TeamRouter {
             .route("/", get(list_teams))
             .route("/", post(create_application))
             .route("/me", get(get_my_team))
-            .route("/:team_id", get(get_team).patch(update_team).delete(delete_team))
-            .route("/:team_id/status", patch(update_status))
-            .route("/:team_id/members/:member_id", delete(remove_member))
+            .route("/{team_id}", get(get_team).patch(update_team).delete(delete_team))
+            .route("/{team_id}/status", patch(update_status))
+            .route("/{team_id}/members/{member_id}", delete(remove_member))
     }
 }
 

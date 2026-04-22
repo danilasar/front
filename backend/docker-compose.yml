@@ -19,22 +19,7 @@ services:
       - ./db/init-scripts:/docker-entrypoint-initdb.d
     command: -p ${POSTGRES_PORT}
 
-  pgadmin:
-    container_name: pgadmin
-    image: dpage/pgadmin4
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: admin
-    ports:
-      - "80:80"
-    networks:
-      app_network:
-        ipv4_address: 10.100.0.3
-    volumes:
-       - pgadmin:/var/lib/pgadmin
-
 volumes:
-  pgadmin:
   postgres_data:
 
 networks:
