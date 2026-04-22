@@ -8,9 +8,8 @@ import Icon from "../assets/icon.svg?react";
 import { Button } from "./ui/button";
 
 export default function NavBar() {
-  const { toggleTheme } = useContext(ColorModeContext);
+  const { darkMode, toggleTheme } = useContext(ColorModeContext);
   const { isAuth, user } = useAppSelector((state) => state.auth);
-  const isDark = document.documentElement.classList.contains("dark");
 
   const visibleRoutes = navRouters.filter((route) => {
     if (route.isPrivate && !isAuth) return false;
@@ -19,10 +18,13 @@ export default function NavBar() {
   });
 
   return (
-    <div className="fixed left-1/2 -translate-x-1/2 top-4 sm:top-5 z-50 w-min(1120px, calc(100vw - 24px))">
-      <div className="rounded-lg bg-white/58 dark:bg-slate-950/70 border border-white/70 dark:border-white/20 shadow-lg backdrop-blur-2xl px-2">
-        <div className="flex gap-1 items-center min-h-14 px-2 sm:px-4 overflow-x-auto">
-          <Icon className="w-8 h-8 flex-shrink-0 text-green-500 dark:text-green-400" />
+    <div className="fixed left-1/2 top-3 z-50 w-[min(1120px,calc(100vw-24px))] -translate-x-1/2 sm:top-5">
+      <div className="rounded-lg border border-white/70 bg-white/82 px-2 shadow-lg shadow-slate-900/10 backdrop-blur-2xl dark:border-white/10 dark:bg-slate-950/78 dark:shadow-black/20">
+        <div className="flex min-h-14 items-center gap-1 overflow-x-auto px-2 sm:px-4">
+          <Link to="/" className="mr-1 flex flex-shrink-0 items-center gap-2 pr-2">
+            <Icon className="h-8 w-8 text-primary" />
+            <span className="hidden text-sm font-bold tracking-normal sm:inline">HackFlow</span>
+          </Link>
           {visibleRoutes.map((route) => (
             <Button
               key={route.path}
@@ -44,10 +46,10 @@ export default function NavBar() {
           )}
           <button 
             onClick={toggleTheme}
-            className="ml-auto p-2 rounded-md hover:bg-accent"
-            title={isDark ? "Светлая тема" : "Темная тема"}
+            className="ml-auto inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+            title={darkMode ? "Светлая тема" : "Темная тема"}
           >
-            {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </button>
         </div>
       </div>

@@ -1,34 +1,16 @@
 import { useEffect, useState } from "react";
-import BlockIcon from "@mui/icons-material/Block";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
-import LinkIcon from "@mui/icons-material/Link";
-import PersonAddAltIcon from "@mui/icons-material/PersonAddAlt";
-import ReportGmailerrorredIcon from "@mui/icons-material/ReportGmailerrorred";
-import SendIcon from "@mui/icons-material/Send";
-import StarsIcon from "@mui/icons-material/Stars";
+import { Ban, CheckCircle2, Download, Link as LinkIcon, Send, ShieldAlert, Star, Trash2, UserPlus } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert";
+import { Badge } from "../components/ui/badge";
+import { Button } from "../components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  FormControl,
-  FormControlLabel,
-  InputLabel,
-  MenuItem,
-  Checkbox,
   Select,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Typography,
-} from "@mui/material";
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select";
 import { useParams } from "react-router-dom";
 import { GridBackGroundLayout } from "../ui/GridBackGroundLayout";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
@@ -40,7 +22,7 @@ import {
   fetchTeams,
   updateTeamStatus,
 } from "../store/teams";
-import type { ExportFormat, TeamStatus } from "../domain/types";
+import type { DynamicFieldValue, ExportFormat, FormField, TeamStatus } from "../domain/types";
 import { InputTextField } from "../ui/InputTextField";
 import {
   buildInvitationLinkViews,
@@ -54,8 +36,7 @@ import {
   type TeamApplicationFormValues,
   type TeamMemberFormValues,
 } from "../domain/teamForms";
-import { fetchHackathon } from "../store/hackathons";
-import { fetchFormFields } from "../store/hackathons";
+import { fetchFormFields, fetchHackathon } from "../store/hackathons";
 import { explainHackathonManagementAccess } from "../domain/access";
 import {
   formatTeamDate,
@@ -67,7 +48,6 @@ import {
   type TeamStatusFilter,
 } from "../domain/teamModeration";
 import { emptyFieldValue, prepareTeamFieldValues, validateRequiredTeamFields } from "../domain/teamFieldValues";
-import type { DynamicFieldValue, FormField } from "../domain/types";
 
 const downloadBlob = (blob: Blob, filename: string) => {
   const url = URL.createObjectURL(blob);
@@ -88,12 +68,7 @@ export default function Teams() {
   const [form, setForm] = useState<TeamApplicationFormValues>({
     name: "",
     fields: {},
-    members: [
-      {
-        ...createEmptyExistingMember("captain"),
-        captain: true,
-      },
-    ],
+    members: [{ ...createEmptyExistingMember("captain"), captain: true }],
   });
   const [errors, setErrors] = useState<string[]>([]);
   const [inviteViews, setInviteViews] = useState<InvitationLinkView[]>([]);
@@ -117,6 +92,7 @@ export default function Teams() {
   const minTeamSize = hackathon?.minTeamSize ?? 1;
   const maxTeamSize = hackathon?.maxTeamSize ?? 5;
   const managementAccess = explainHackathonManagementAccess(user, hackathon);
+  const visibleTeamFields = fields.filter((field) => field.visible);
 
   const updateMember = (id: string, patch: Partial<TeamMemberFormValues>) => {
     setForm((prev) => ({
@@ -160,8 +136,6 @@ export default function Teams() {
     }));
   };
 
-  const visibleTeamFields = fields.filter((field) => field.visible);
-
   const updateTeamField = (key: string, value: DynamicFieldValue) => {
     setForm((prev) => ({
       ...prev,
@@ -175,34 +149,35 @@ export default function Teams() {
 
     if (field.type === "select" || field.type === "radio") {
       return (
-        <FormControl key={field.id} fullWidth>
-          <InputLabel id={`team-field-${field.id}`}>{label}</InputLabel>
+        <div key={field.id}>
+          <label className="mb-1.5 block text-sm font-semibold">{label}</label>
           <Select
-            labelId={`team-field-${field.id}`}
-            label={label}
             value={typeof value === "string" ? value : ""}
-            onChange={(event) => updateTeamField(field.key, event.target.value)}
+            onValueChange={(nextValue) => updateTeamField(field.key, nextValue)}
           >
-            {field.options.map((option) => (
-              <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
-            ))}
+            <SelectTrigger>
+              <SelectValue placeholder="Выберите значение" />
+            </SelectTrigger>
+            <SelectContent>
+              {field.options.map((option) => (
+                <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+              ))}
+            </SelectContent>
           </Select>
-        </FormControl>
+        </div>
       );
     }
 
     if (field.type === "checkbox") {
       return (
-        <FormControlLabel
-          key={field.id}
-          control={(
-            <Checkbox
-              checked={Boolean(value)}
-              onChange={(event) => updateTeamField(field.key, event.target.checked)}
-            />
-          )}
-          label={label}
-        />
+        <label key={field.id} className="flex items-center gap-2 text-sm font-medium">
+          <input
+            type="checkbox"
+            checked={Boolean(value)}
+            onChange={(event) => updateTeamField(field.key, event.target.checked)}
+          />
+          {label}
+        </label>
       );
     }
 
@@ -280,49 +255,51 @@ export default function Teams() {
   };
 
   return (
-    <GridBackGroundLayout sx={{ py: 14 }}>
-      <Stack spacing={3} sx={{ width: "min(1100px, 100%)", px: 2 }}>
+    <GridBackGroundLayout className="py-10">
+      <div className="mx-auto w-full max-w-6xl space-y-6">
         <Card>
-          <CardContent>
-            <Typography variant="h3">Команды</Typography>
-            <Typography color="text.secondary">Заявки, составы и модерация участников хакатона</Typography>
+          <CardContent className="pt-6">
+            <h1 className="text-3xl font-bold tracking-normal md:text-4xl">Команды</h1>
+            <p className="mt-2 text-muted-foreground">Заявки, составы и модерация участников хакатона</p>
           </CardContent>
         </Card>
 
         <Card>
+          <CardHeader>
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <CardTitle>Подать заявку</CardTitle>
+                <CardDescription>Размер команды: {minTeamSize}-{maxTeamSize}</CardDescription>
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={form.members.length >= maxTeamSize}
+                  onClick={() => addMember("existing_user")}
+                >
+                  <LinkIcon className="h-4 w-4" />
+                  Добавить по логину
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={form.members.length >= maxTeamSize}
+                  onClick={() => addMember("new_user")}
+                >
+                  <UserPlus className="h-4 w-4" />
+                  Добавить нового
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
           <CardContent>
-            <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
-              <Box display="flex" justifyContent="space-between" gap={2} flexWrap="wrap">
-                <Box>
-                  <Typography variant="h5">Подать заявку</Typography>
-                  <Typography color="text.secondary">
-                    Размер команды: {minTeamSize}-{maxTeamSize}
-                  </Typography>
-                </Box>
-                <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-                  <Button
-                    type="button"
-                    variant="outlined"
-                    startIcon={<LinkIcon />}
-                    disabled={form.members.length >= maxTeamSize}
-                    onClick={() => addMember("existing_user")}
-                  >
-                    Добавить по логину
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outlined"
-                    startIcon={<PersonAddAltIcon />}
-                    disabled={form.members.length >= maxTeamSize}
-                    onClick={() => addMember("new_user")}
-                  >
-                    Добавить нового
-                  </Button>
-                </Stack>
-              </Box>
-
+            <form className="space-y-5" onSubmit={handleSubmit}>
               {errors.length > 0 && (
-                <Alert severity="error">{errors.join(". ")}</Alert>
+                <Alert variant="destructive">
+                  <ShieldAlert className="h-4 w-4" />
+                  <AlertDescription>{errors.join(". ")}</AlertDescription>
+                </Alert>
               )}
 
               <InputTextField
@@ -332,65 +309,56 @@ export default function Teams() {
               />
 
               {visibleTeamFields.length > 0 && (
-                <Stack spacing={2}>
-                  <Typography variant="h6">Поля команды</Typography>
+                <div className="space-y-4 rounded-lg border bg-muted/30 p-4">
+                  <h3 className="font-bold">Поля команды</h3>
                   {visibleTeamFields.map(renderTeamField)}
-                </Stack>
+                </div>
               )}
 
-              <Stack spacing={2}>
+              <div className="space-y-4">
                 {form.members.map((member, index) => (
-                  <Box
-                    key={member.id}
-                    sx={(theme) => ({
-                      border: `1px solid ${theme.palette.divider}`,
-                      borderRadius: 2,
-                      p: 2,
-                      background: theme.palette.mode === "dark"
-                        ? "rgba(7, 27, 45, 0.42)"
-                        : "rgba(255, 255, 255, 0.42)",
-                      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.72)",
-                    })}
-                  >
-                    <Stack spacing={2}>
-                      <Box display="flex" justifyContent="space-between" gap={2} flexWrap="wrap">
-                        <Typography variant="h6">Участник {index + 1}</Typography>
-                        <Stack direction="row" spacing={1}>
-                          <Button
-                            type="button"
-                            variant={member.captain ? "contained" : "outlined"}
-                            startIcon={<StarsIcon />}
-                            onClick={() => setCaptain(member.id)}
-                          >
-                            Капитан
-                          </Button>
-                          <Button
-                            type="button"
-                            color="error"
-                            variant="outlined"
-                            startIcon={<DeleteOutlineIcon />}
-                            disabled={form.members.length <= 1}
-                            onClick={() => removeMember(member.id)}
-                          >
-                            Удалить
-                          </Button>
-                        </Stack>
-                      </Box>
-
-                      <FormControl fullWidth>
-                        <InputLabel id={`member-kind-${member.id}`}>Тип участника</InputLabel>
-                        <Select
-                          labelId={`member-kind-${member.id}`}
-                          label="Тип участника"
-                          value={member.kind}
-                          onChange={(event) => {
-                            updateMemberKind(member.id, event.target.value as TeamMemberFormValues["kind"]);
-                          }}
+                  <div key={member.id} className="rounded-lg border bg-background/70 p-4">
+                    <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <h3 className="text-lg font-bold">Участник {index + 1}</h3>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          variant={member.captain ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setCaptain(member.id)}
                         >
-                          <MenuItem value="existing_user">Существующий пользователь</MenuItem>
-                          <MenuItem value="new_user">Новый участник</MenuItem>
+                          <Star className="h-4 w-4" />
+                          Капитан
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          disabled={form.members.length <= 1}
+                          onClick={() => removeMember(member.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Удалить
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <label className="mb-1.5 block text-sm font-semibold">Тип участника</label>
+                        <Select
+                          value={member.kind}
+                          onValueChange={(value) => updateMemberKind(member.id, value as TeamMemberFormValues["kind"])}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="existing_user">Существующий пользователь</SelectItem>
+                            <SelectItem value="new_user">Новый участник</SelectItem>
+                          </SelectContent>
                         </Select>
-                      </FormControl>
+                      </div>
 
                       {member.kind === "existing_user" ? (
                         <InputTextField
@@ -411,7 +379,7 @@ export default function Teams() {
                             value={member.email}
                             onChange={(event) => updateMember(member.id, { email: event.target.value })}
                           />
-                          <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+                          <div className="grid gap-4 sm:grid-cols-2">
                             <InputTextField
                               label="Учебное заведение"
                               value={member.education}
@@ -422,200 +390,192 @@ export default function Teams() {
                               value={member.course}
                               onChange={(event) => updateMember(member.id, { course: event.target.value })}
                             />
-                          </Stack>
+                          </div>
                         </>
                       )}
-                    </Stack>
-                  </Box>
+                    </div>
+                  </div>
                 ))}
-              </Stack>
+              </div>
 
-              <Button type="submit" variant="contained" startIcon={<SendIcon />}>Подать заявку</Button>
-            </Stack>
+              <Button type="submit">
+                <Send className="h-4 w-4" />
+                Подать заявку
+              </Button>
+            </form>
           </CardContent>
         </Card>
 
         {inviteViews.length > 0 && (
-          <Alert severity="success">
-            <Stack spacing={1}>
-              <Typography fontWeight={700}>Ссылки приглашений</Typography>
+          <Alert>
+            <CheckCircle2 className="h-4 w-4" />
+            <AlertTitle>Ссылки приглашений</AlertTitle>
+            <AlertDescription className="space-y-2">
               {inviteViews.map((link) => (
-                <Box key={link.memberId}>
-                  <Typography fontWeight={700}>{link.label}</Typography>
-                  <Typography sx={{ wordBreak: "break-word" }}>{link.url}</Typography>
-                </Box>
+                <div key={link.memberId}>
+                  <div className="font-semibold">{link.label}</div>
+                  <div className="break-all text-muted-foreground">{link.url}</div>
+                </div>
               ))}
-            </Stack>
+            </AlertDescription>
           </Alert>
         )}
 
         <Card>
-          <CardContent>
-            <Stack spacing={2}>
-              <Box display="flex" justifyContent="space-between" gap={2} flexWrap="wrap" alignItems="center">
-                <Box>
-                  <Typography variant="h5">Таблица заявок</Typography>
-                  <Typography color="text.secondary">
-                    Статусы команд, составы, капитаны и модерация участников
-                  </Typography>
-                </Box>
-                <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-                  <Button
-                    type="button"
-                    variant="outlined"
-                    startIcon={<FileDownloadOutlinedIcon />}
-                    disabled={!managementAccess.allowed || teams.length === 0}
-                    onClick={() => void handleExport("csv")}
-                  >
-                    CSV
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outlined"
-                    startIcon={<FileDownloadOutlinedIcon />}
-                    disabled={!managementAccess.allowed || teams.length === 0}
-                    onClick={() => void handleExport("xlsx")}
-                  >
-                    XLSX
-                  </Button>
-                  <FormControl sx={{ minWidth: 220 }}>
-                    <InputLabel id="team-status-filter-label">Статус</InputLabel>
-                    <Select
-                      labelId="team-status-filter-label"
-                      label="Статус"
-                      value={statusFilter}
-                      onChange={(event) => setStatusFilter(event.target.value as TeamStatusFilter)}
-                    >
+          <CardHeader>
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <CardTitle>Таблица заявок</CardTitle>
+                <CardDescription>Статусы команд, составы, капитаны и модерация участников</CardDescription>
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={!managementAccess.allowed || teams.length === 0}
+                  onClick={() => void handleExport("csv")}
+                >
+                  <Download className="h-4 w-4" />
+                  CSV
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={!managementAccess.allowed || teams.length === 0}
+                  onClick={() => void handleExport("xlsx")}
+                >
+                  <Download className="h-4 w-4" />
+                  XLSX
+                </Button>
+                <div className="min-w-56">
+                  <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as TeamStatusFilter)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
                       {teamStatusOptions.map((option) => (
-                        <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
+                        <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
                       ))}
-                    </Select>
-                  </FormControl>
-                </Stack>
-              </Box>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Alert>
+              <AlertDescription>{managementAccess.reason}</AlertDescription>
+            </Alert>
 
-              <Alert severity={managementAccess.allowed ? "success" : "info"}>
-                {managementAccess.reason}
-              </Alert>
-
-              <Box sx={{ overflowX: "auto" }}>
-                <Table size="small" sx={{ minWidth: 980 }}>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Команда</TableCell>
-                      <TableCell>Статус</TableCell>
-                      <TableCell>Капитан</TableCell>
-                      <TableCell>Состав</TableCell>
-                      <TableCell>Подача</TableCell>
-                      <TableCell>Причина</TableCell>
-                      <TableCell align="right">Действия</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {teams.map((team) => {
-                      const captain = getTeamCaptain(team);
-                      const reason = moderationReasons[team.id] ?? team.moderationReason ?? "";
-                      return (
-                        <TableRow key={team.id} hover>
-                          <TableCell>
-                            <Stack spacing={0.5}>
-                              <Typography fontWeight={700}>{team.name}</Typography>
-                              <Typography variant="body2" color="text.secondary">
-                                {team.members.length} участн.
-                              </Typography>
-                            </Stack>
-                          </TableCell>
-                          <TableCell>
-                            <Chip label={teamStatusLabels[team.status]} color={team.status === "admitted" ? "secondary" : "default"} />
-                          </TableCell>
-                          <TableCell>
-                            {captain ? (
-                              <Stack spacing={0.5}>
-                                <Typography>{captain.fullName}</Typography>
-                                {captain.login && (
-                                  <Typography variant="body2" color="text.secondary">@{captain.login}</Typography>
+            <div className="overflow-x-auto rounded-lg border bg-background/70">
+              <table className="w-full min-w-[980px] border-collapse text-sm">
+                <thead className="bg-muted/70 text-left">
+                  <tr>
+                    <th className="px-4 py-3 font-semibold">Команда</th>
+                    <th className="px-4 py-3 font-semibold">Статус</th>
+                    <th className="px-4 py-3 font-semibold">Капитан</th>
+                    <th className="px-4 py-3 font-semibold">Состав</th>
+                    <th className="px-4 py-3 font-semibold">Подача</th>
+                    <th className="px-4 py-3 font-semibold">Причина</th>
+                    <th className="px-4 py-3 text-right font-semibold">Действия</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {teams.map((team) => {
+                    const captain = getTeamCaptain(team);
+                    const reason = moderationReasons[team.id] ?? team.moderationReason ?? "";
+                    return (
+                      <tr key={team.id} className="border-t align-top">
+                        <td className="px-4 py-4">
+                          <div className="font-bold">{team.name}</div>
+                          <div className="text-muted-foreground">{team.members.length} участн.</div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <Badge variant={team.status === "admitted" ? "secondary" : "default"}>
+                            {teamStatusLabels[team.status]}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-4">
+                          {captain ? (
+                            <div>
+                              <div>{captain.fullName}</div>
+                              {captain.login && <div className="text-muted-foreground">@{captain.login}</div>}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">Не выбран</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex flex-wrap gap-2">
+                            {team.members.map((member) => (
+                              <span
+                                key={member.id}
+                                className="inline-flex items-center gap-2 rounded-full border bg-muted/50 px-2.5 py-1 text-xs font-semibold"
+                              >
+                                {member.fullName}{member.captain ? " · капитан" : ""} · {teamMemberStatusLabels[member.status]}
+                                {managementAccess.allowed && member.status !== "disqualified" && (
+                                  <button
+                                    type="button"
+                                    className="text-destructive"
+                                    title="Дисквалифицировать"
+                                    onClick={() => void handleDisqualifyMember(team.id, member.id)}
+                                  >
+                                    <Ban className="h-3.5 w-3.5" />
+                                  </button>
                                 )}
-                              </Stack>
-                            ) : (
-                              <Typography color="text.secondary">Не выбран</Typography>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                              {team.members.map((member) => (
-                                <Chip
-                                  key={member.id}
-                                  label={`${member.fullName}${member.captain ? " · капитан" : ""} · ${teamMemberStatusLabels[member.status]}`}
-                                  color={member.status === "pending_invitation" ? "primary" : member.status === "disqualified" ? "error" : "default"}
-                                  onDelete={managementAccess.allowed && member.status !== "disqualified"
-                                    ? () => {
-                                      void handleDisqualifyMember(team.id, member.id);
-                                    }
-                                    : undefined}
-                                  deleteIcon={<BlockIcon />}
-                                />
-                              ))}
-                            </Stack>
-                          </TableCell>
-                          <TableCell>{formatTeamDate(team.submittedAt)}</TableCell>
-                          <TableCell sx={{ minWidth: 220 }}>
-                            <InputTextField
-                              label="Reason"
-                              value={reason}
-                              size="small"
-                              disabled={!managementAccess.allowed}
-                              onChange={(event) => updateModerationReason(team.id, event.target.value)}
-                            />
-                          </TableCell>
-                          <TableCell align="right">
-                            <Stack direction="row" spacing={1} justifyContent="flex-end" flexWrap="wrap" useFlexGap>
-                              <Button
-                                size="small"
-                                variant="outlined"
-                                startIcon={<CheckCircleOutlineIcon />}
-                                disabled={!managementAccess.allowed || team.status === "admitted"}
-                                onClick={() => {
-                                  void handleTeamStatus(team.id, "admitted");
-                                }}
-                              >
-                                Допустить
-                              </Button>
-                              <Button
-                                size="small"
-                                variant="outlined"
-                                color="warning"
-                                startIcon={<ReportGmailerrorredIcon />}
-                                disabled={!managementAccess.allowed || team.status === "rejected"}
-                                onClick={() => {
-                                  void handleTeamStatus(team.id, "rejected");
-                                }}
-                              >
-                                Отклонить
-                              </Button>
-                              <Button
-                                size="small"
-                                variant="outlined"
-                                color="error"
-                                startIcon={<BlockIcon />}
-                                disabled={!managementAccess.allowed || team.status === "disqualified"}
-                                onClick={() => {
-                                  void handleTeamStatus(team.id, "disqualified");
-                                }}
-                              >
-                                Дискв.
-                              </Button>
-                            </Stack>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </Box>
-            </Stack>
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="px-4 py-4">{formatTeamDate(team.submittedAt)}</td>
+                        <td className="min-w-56 px-4 py-4">
+                          <InputTextField
+                            label="Причина"
+                            value={reason}
+                            disabled={!managementAccess.allowed}
+                            onChange={(event) => updateModerationReason(team.id, event.target.value)}
+                          />
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex flex-wrap justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={!managementAccess.allowed || team.status === "admitted"}
+                              onClick={() => void handleTeamStatus(team.id, "admitted")}
+                            >
+                              <CheckCircle2 className="h-4 w-4" />
+                              Допустить
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={!managementAccess.allowed || team.status === "rejected"}
+                              onClick={() => void handleTeamStatus(team.id, "rejected")}
+                            >
+                              <ShieldAlert className="h-4 w-4" />
+                              Отклонить
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              disabled={!managementAccess.allowed || team.status === "disqualified"}
+                              onClick={() => void handleTeamStatus(team.id, "disqualified")}
+                            >
+                              <Ban className="h-4 w-4" />
+                              Дискв.
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
-      </Stack>
+      </div>
     </GridBackGroundLayout>
   );
 }

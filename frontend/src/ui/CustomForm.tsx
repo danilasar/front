@@ -13,7 +13,7 @@ export const CustomForm: React.FC<{
       {children}
       <Button
         type="submit"
-        className="mt-2"
+        className="mt-2 w-full"
       >
         {buttonText}
       </Button>

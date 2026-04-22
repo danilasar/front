@@ -29,8 +29,8 @@ function App() {
   }
 
   return (
-    <ColorModeContext.Provider value={{ toggleTheme }}>
-      <div className={darkMode ? "dark" : ""}>
+    <ColorModeContext.Provider value={{ darkMode, toggleTheme }}>
+      <div className={`${darkMode ? "dark" : ""} min-h-screen bg-background text-foreground`}>
         <NavBar />
         <ErrorModal />
         <CommonWrapper>
