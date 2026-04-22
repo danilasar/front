@@ -1,4 +1,5 @@
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography } from "@mui/material";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../components/ui/dialog";
+import { Button } from "../components/ui/button";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { clearError } from "../store/settings";
 
@@ -14,34 +15,20 @@ export const ErrorModal = () => {
   };
 
   return (
-    <Dialog
-      open={isErrorModalOpen}
-      onClose={handleClose}
-    >
-      <DialogTitle
-        sx={(theme) => {
-          return {
-            color: theme.palette.error.main
-          }
-        }}
-      >Ошибка</DialogTitle>
+    <Dialog open={isErrorModalOpen} onOpenChange={handleClose}>
       <DialogContent>
-        <Typography
-          sx={(theme) => {
-            return {
-              color: theme.palette.error.main
-            }
-          }}
-        >
+        <DialogHeader>
+          <DialogTitle className="text-red-500">Ошибка</DialogTitle>
+        </DialogHeader>
+        <div className="text-red-500 py-4">
           {error}
-        </Typography>
+        </div>
+        <DialogFooter>
+          <Button onClick={handleClose}>
+            Закрыть
+          </Button>
+        </DialogFooter>
       </DialogContent>
-
-      <DialogActions>
-        <Button onClick={handleClose} variant="contained">
-          Close
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 };

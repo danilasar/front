@@ -1,19 +1,17 @@
-import { alpha, AppBar, Toolbar, Button, Box, useTheme, IconButton, Tooltip, SvgIcon } from "@mui/material";
 import { Link } from "react-router-dom";
 import { navRouters } from "../routes";
 import { useContext } from "react";
 import { ColorModeContext } from "../themeModeContext";
-import LightModeIcon from "@mui/icons-material/LightMode"
-import DarkModeIcon from "@mui/icons-material/DarkMode"
+import { Moon, Sun } from "lucide-react";
 import { useAppSelector } from "../store/hooks";
 import Icon from "../assets/icon.svg?react";
+import { Button } from "./ui/button";
 
 export default function NavBar() {
   const { toggleTheme } = useContext(ColorModeContext);
   const { isAuth, user } = useAppSelector((state) => state.auth);
+  const isDark = document.documentElement.classList.contains("dark");
 
-  const theme = useTheme();
-  const isDark = theme.palette.mode === "dark";
   const visibleRoutes = navRouters.filter((route) => {
     if (route.isPrivate && !isAuth) return false;
     if (route.roles && (!user || !route.roles.includes(user.role))) return false;
@@ -21,60 +19,38 @@ export default function NavBar() {
   });
 
   return (
-    <Box
-      sx={{
-        position: "fixed",
-        left: "50%",
-        transform: "translateX(-50%)",
-        top: { xs: 10, sm: 18 },
-        zIndex: 1000,
-        width: "min(1120px, calc(100vw - 24px))",
-      }}
-    >
-      <AppBar
-        position="static"
-        sx={{
-          borderRadius: "8px",
-          background: theme.palette.mode === "dark"
-            ? alpha("#0A3554", 0.72)
-            : alpha("#FFFFFF", 0.58),
-          border: `1px solid ${alpha(theme.palette.common.white, theme.palette.mode === "dark" ? 0.22 : 0.74)}`,
-          boxShadow: `0 18px 48px ${alpha("#087FB2", theme.palette.mode === "dark" ? 0.28 : 0.18)}, inset 0 1px 0 ${alpha("#FFFFFF", 0.78)}`,
-          backdropFilter: "blur(18px) saturate(160%)",
-          px: 0.75,
-        }}
-      >
-        <Toolbar sx={{ gap: 1, minHeight: 58, px: { xs: 1, sm: 2 }, overflowX: "auto" }}>
-          <SvgIcon component={Icon} inheritViewBox sx={{ width: 34, height: 34, flexShrink: 0, color: theme.palette.secondary.main }} />
+    <div className="fixed left-1/2 -translate-x-1/2 top-4 sm:top-5 z-50 w-min(1120px, calc(100vw - 24px))">
+      <div className="rounded-lg bg-white/58 dark:bg-slate-950/70 border border-white/70 dark:border-white/20 shadow-lg backdrop-blur-2xl px-2">
+        <div className="flex gap-1 items-center min-h-14 px-2 sm:px-4 overflow-x-auto">
+          <Icon className="w-8 h-8 flex-shrink-0 text-green-500 dark:text-green-400" />
           {visibleRoutes.map((route) => (
             <Button
               key={route.path}
-              component={Link}
-              to={route.path}
-              sx={{
-                color: theme.palette.text.primary,
-                background: "transparent",
-                whiteSpace: "nowrap",
-                "&:hover": {
-                  background: alpha(theme.palette.common.white, theme.palette.mode === "dark" ? 0.12 : 0.48),
-                },
-              }}
+              asChild
+              variant="ghost"
+              className="whitespace-nowrap"
             >
-              {route.label}
+              <Link to={route.path}>
+                {route.label}
+              </Link>
             </Button>
           ))}
           {!isAuth && (
-            <Button component={Link} to="/login" sx={{ color: theme.palette.text.primary }}>
-              Войти
+            <Button asChild variant="ghost">
+              <Link to="/login">
+                Войти
+              </Link>
             </Button>
           )}
-          <Tooltip title={isDark ? "Светлая тема" : "Темная тема"}>
-            <IconButton onClick={toggleTheme}>
-              {isDark ? <LightModeIcon /> : <DarkModeIcon />}
-            </IconButton>
-          </Tooltip>
-        </Toolbar>
-      </AppBar>
-    </Box>
+          <button 
+            onClick={toggleTheme}
+            className="ml-auto p-2 rounded-md hover:bg-accent"
+            title={isDark ? "Светлая тема" : "Темная тема"}
+          >
+            {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

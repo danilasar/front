@@ -1,29 +1,22 @@
-import { Box, Button } from "@mui/material";
+import { Button } from "../components/ui/button";
 
 export const CustomForm: React.FC<{
-  onSubmit: () => void;
+  onSubmit: (e: React.FormEvent) => void;
   children: React.ReactNode;
   buttonText: string,
 }> = ({ onSubmit, children, buttonText }) => {
   return (
-    <Box component="form" onSubmit={onSubmit}
-      sx={{
-        display: 'flex',
-        flexDirection: "column",
-        alignItems: 'center',
-        width: "min(420px, 100%)",
-      }}
+    <form 
+      onSubmit={onSubmit}
+      className="flex flex-col items-center w-full max-w-[420px]"
     >
       {children}
       <Button
         type="submit"
-        variant="contained"
-        sx={{
-          mt: 2,
-        }}
+        className="mt-2"
       >
         {buttonText}
       </Button>
-    </Box>
+    </form>
   );
 }

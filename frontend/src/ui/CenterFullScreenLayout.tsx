@@ -1,31 +1,18 @@
-import { Box, Container, type BoxProps } from "@mui/material";
 import type React from "react";
 
-export type CenterFullScreenLaoutProps = BoxProps & {
+export type CenterFullScreenLaoutProps = React.HTMLAttributes<HTMLDivElement> & {
   children: React.ReactNode;
 };
 
-export const CenterFullScreenLayout = ({ children, sx, ...props }: CenterFullScreenLaoutProps) => {
+export const CenterFullScreenLayout = ({ children, className, ...props }: CenterFullScreenLaoutProps) => {
   return (
-    <Box sx={[{
-      minHeight: "100vh",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      position: "relative",
-      overflow: "hidden",
-    },
-    ...(Array.isArray(sx) ? sx : [sx])
-    ]} {...props}>
-      <Container maxWidth="xl"
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-        }}>
+    <div 
+      className={`min-h-screen flex items-center justify-center relative overflow-hidden ${className || ""}`}
+      {...props}
+    >
+      <div className="flex flex-col items-center w-full">
         {children}
-      </Container>
-    </Box>
+      </div>
+    </div>
   )
-
 }

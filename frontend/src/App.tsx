@@ -1,8 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import NavBar from "./components/NavBar";
 import { routes } from "./routes";
-import { CssBaseline, ThemeProvider } from "@mui/material";
-import { darkTheme, lightTheme } from "./theme";
 import { useEffect, useState } from "react";
 import { ErrorModal } from "./components/ErrorModal";
 import { AuthWrapper } from "./components/wrappers/AuthWrapper";
@@ -32,8 +30,7 @@ function App() {
 
   return (
     <ColorModeContext.Provider value={{ toggleTheme }}>
-      <ThemeProvider theme={darkMode ? darkTheme : lightTheme}>
-        <CssBaseline />
+      <div className={darkMode ? "dark" : ""}>
         <NavBar />
         <ErrorModal />
         <CommonWrapper>
@@ -86,7 +83,7 @@ function App() {
             </Routes>
           </AuthWrapper>
         </CommonWrapper>
-      </ThemeProvider>
+      </div>
     </ColorModeContext.Provider >
   );
 }

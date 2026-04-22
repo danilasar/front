@@ -1,20 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
-import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
-import BoltOutlinedIcon from "@mui/icons-material/BoltOutlined";
+import { Archive, Zap, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert";
+import { Button } from "../components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
+import { Badge } from "../components/ui/badge";
 import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  FormControl,
-  InputLabel,
-  MenuItem,
   Select,
-  Stack,
-  Typography,
-} from "@mui/material";
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select";
 import { GridBackGroundLayout } from "../ui/GridBackGroundLayout";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { assignOrganizer, createOrganizer, fetchOrganizers } from "../store/admin";
@@ -137,27 +133,33 @@ export default function AdminPanel() {
   };
 
   return (
-    <GridBackGroundLayout sx={{ py: 14 }}>
-      <Stack spacing={3} sx={{ width: "min(900px, 100%)", px: 2 }}>
+    <GridBackGroundLayout className="py-14">
+      <div className="w-full max-w-4xl px-2 space-y-6">
         <Card>
-          <CardContent>
-            <Stack spacing={2}>
-              <Typography variant="h3">Администрирование</Typography>
-              <Typography color="text.secondary">Глобальные сущности: хакатоны, организаторы и назначения</Typography>
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              <div>
+                <CardTitle className="text-3xl mb-2">Администрирование</CardTitle>
+                <CardDescription>Глобальные сущности: хакатоны, организаторы и назначения</CardDescription>
+              </div>
               {errors.length > 0 && (
-                <Alert severity="error">
-                  {errors.join(". ")}
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Ошибка</AlertTitle>
+                  <AlertDescription>{errors.join(". ")}</AlertDescription>
                 </Alert>
               )}
-            </Stack>
+            </div>
           </CardContent>
         </Card>
 
-        <Box display="grid" gridTemplateColumns={{ xs: "1fr", md: "1fr 1fr" }} gap={3}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card>
+            <CardHeader>
+              <CardTitle>Новый организатор</CardTitle>
+            </CardHeader>
             <CardContent>
-              <Stack component="form" spacing={2} onSubmit={handleCreateOrganizer}>
-                <Typography variant="h5">Новый организатор</Typography>
+              <form onSubmit={handleCreateOrganizer} className="space-y-4">
                 <InputTextField
                   label="ФИО"
                   value={organizerForm.fullName}
@@ -180,15 +182,17 @@ export default function AdminPanel() {
                   value={organizerForm.phone}
                   onChange={(event) => setOrganizerForm((prev) => ({ ...prev, phone: event.target.value }))}
                 />
-                <Button type="submit" variant="contained">Создать организатора</Button>
-              </Stack>
+                <Button type="submit" className="w-full">Создать организатора</Button>
+              </form>
             </CardContent>
           </Card>
 
           <Card>
+            <CardHeader>
+              <CardTitle>Новый хакатон</CardTitle>
+            </CardHeader>
             <CardContent>
-              <Stack component="form" spacing={2} onSubmit={handleCreateHackathon}>
-                <Typography variant="h5">Новый хакатон</Typography>
+              <form onSubmit={handleCreateHackathon} className="space-y-4">
                 <InputTextField
                   label="Название"
                   value={hackathonForm.title}
@@ -198,26 +202,23 @@ export default function AdminPanel() {
                   label="Описание"
                   value={hackathonForm.description}
                   onChange={(event) => setHackathonForm((prev) => ({ ...prev, description: event.target.value }))}
-                  multiline
-                  minRows={3}
+                  placeholder="Введите описание..."
                 />
-                <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+                <div className="grid grid-cols-2 gap-2">
                   <InputTextField
                     label="Начало"
                     type="date"
                     value={hackathonForm.startsAt}
                     onChange={(event) => setHackathonForm((prev) => ({ ...prev, startsAt: event.target.value }))}
-                    InputLabelProps={{ shrink: true }}
                   />
                   <InputTextField
                     label="Окончание"
                     type="date"
                     value={hackathonForm.endsAt}
                     onChange={(event) => setHackathonForm((prev) => ({ ...prev, endsAt: event.target.value }))}
-                    InputLabelProps={{ shrink: true }}
                   />
-                </Stack>
-                <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
                   <InputTextField
                     label="Мин. участников"
                     type="number"
@@ -230,129 +231,132 @@ export default function AdminPanel() {
                     value={hackathonForm.maxTeamSize}
                     onChange={(event) => setHackathonForm((prev) => ({ ...prev, maxTeamSize: Number(event.target.value) }))}
                   />
-                </Stack>
-                <FormControl fullWidth>
-                  <InputLabel id="hackathon-organizer-label">Организатор</InputLabel>
-                  <Select
-                    labelId="hackathon-organizer-label"
-                    label="Организатор"
-                    value={hackathonForm.organizerId}
-                    onChange={(event) => setHackathonForm((prev) => ({ ...prev, organizerId: event.target.value }))}
-                  >
-                    <MenuItem value="">Назначить позже</MenuItem>
-                    {organizerOptions.map((option) => (
-                      <MenuItem key={option.id} value={option.id}>{option.label}</MenuItem>
-                    ))}
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-1 block">Организатор</label>
+                  <Select value={hackathonForm.organizerId} onValueChange={(value) => setHackathonForm((prev) => ({ ...prev, organizerId: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Выберите организатора" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Назначить позже</SelectItem>
+                      {organizerOptions.map((option) => (
+                        <SelectItem key={option.id} value={option.id}>{option.label}</SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
-                </FormControl>
-                <Button type="submit" variant="contained">Создать хакатон</Button>
-              </Stack>
+                </div>
+                <Button type="submit" className="w-full">Создать хакатон</Button>
+              </form>
             </CardContent>
           </Card>
-        </Box>
+        </div>
 
         <Card>
+          <CardHeader>
+            <CardTitle>Назначение организатора</CardTitle>
+          </CardHeader>
           <CardContent>
-            <Stack component="form" spacing={2} onSubmit={handleAssignOrganizer}>
-              <Typography variant="h5">Назначение организатора</Typography>
-              <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-                <FormControl fullWidth>
-                  <InputLabel id="assignment-hackathon-label">Хакатон</InputLabel>
-                  <Select
-                    labelId="assignment-hackathon-label"
-                    label="Хакатон"
-                    value={assignment.hackathonId}
-                    onChange={(event) => setAssignment((prev) => ({ ...prev, hackathonId: event.target.value }))}
-                  >
-                    {hackathons.map((hackathon) => (
-                      <MenuItem key={hackathon.id} value={hackathon.id}>{hackathon.title}</MenuItem>
-                    ))}
+            <form onSubmit={handleAssignOrganizer} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-1 block">Хакатон</label>
+                  <Select value={assignment.hackathonId} onValueChange={(value) => setAssignment((prev) => ({ ...prev, hackathonId: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Выберите хакатон" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {hackathons.map((hackathon) => (
+                        <SelectItem key={hackathon.id} value={hackathon.id}>{hackathon.title}</SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
-                </FormControl>
-                <FormControl fullWidth>
-                  <InputLabel id="assignment-organizer-label">Организатор</InputLabel>
-                  <Select
-                    labelId="assignment-organizer-label"
-                    label="Организатор"
-                    value={assignment.organizerId}
-                    onChange={(event) => setAssignment((prev) => ({ ...prev, organizerId: event.target.value }))}
-                  >
-                    {organizerOptions.map((option) => (
-                      <MenuItem key={option.id} value={option.id}>{option.label}</MenuItem>
-                    ))}
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-1 block">Организатор</label>
+                  <Select value={assignment.organizerId} onValueChange={(value) => setAssignment((prev) => ({ ...prev, organizerId: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Выберите организатора" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {organizerOptions.map((option) => (
+                        <SelectItem key={option.id} value={option.id}>{option.label}</SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
-                </FormControl>
-                <Button type="submit" variant="contained" sx={{ minWidth: 150 }}>Назначить</Button>
-              </Stack>
-            </Stack>
+                </div>
+                <div className="flex items-end">
+                  <Button type="submit" className="w-full">Назначить</Button>
+                </div>
+              </div>
+            </form>
           </CardContent>
         </Card>
 
-        <Box display="grid" gridTemplateColumns={{ xs: "1fr", md: "1fr 1fr" }} gap={3}>
-          <Stack spacing={2}>
-            <Typography variant="h5">Организаторы</Typography>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <h3 className="text-xl font-bold">Организаторы</h3>
             {organizers.map((organizer) => (
               <Card key={organizer.id}>
-                <CardContent>
-                  <Typography variant="h6">{organizer.fullName}</Typography>
-                  <Typography color="text.secondary">{organizer.email}</Typography>
-                  <Typography>Роль: {organizer.role}</Typography>
+                <CardContent className="pt-6">
+                  <h4 className="font-semibold">{organizer.fullName}</h4>
+                  <p className="text-sm text-muted-foreground">{organizer.email}</p>
+                  <p className="text-sm">Роль: {organizer.role}</p>
                 </CardContent>
               </Card>
             ))}
-          </Stack>
+          </div>
 
-          <Stack spacing={2}>
-            <Box display="flex" justifyContent="space-between" gap={2} flexWrap="wrap" alignItems="center">
-              <Box>
-                <Typography variant="h5">Хакатоны</Typography>
-                <Typography color="text.secondary">Список, архив и активное событие</Typography>
-              </Box>
-              <FormControl sx={{ minWidth: 180 }}>
-                <InputLabel id="hackathon-status-filter-label">Статус</InputLabel>
-                <Select
-                  labelId="hackathon-status-filter-label"
-                  label="Статус"
-                  value={hackathonStatusFilter}
-                  onChange={(event) => setHackathonStatusFilter(event.target.value as HackathonStatusFilter)}
-                >
-                  {hackathonStatusOptions.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
-                  ))}
+          <div className="space-y-4">
+            <div className="flex justify-between items-start gap-4 flex-wrap">
+              <div>
+                <h3 className="text-xl font-bold">Хакатоны</h3>
+                <p className="text-sm text-muted-foreground">Список, архив и активное событие</p>
+              </div>
+              <div className="w-full sm:w-48">
+                <label className="text-sm font-medium text-foreground mb-1 block">Статус</label>
+                <Select value={hackathonStatusFilter} onValueChange={(value) => setHackathonStatusFilter(value as HackathonStatusFilter)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {hackathonStatusOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
-              </FormControl>
-            </Box>
+              </div>
+            </div>
             {filteredHackathons.map((hackathon) => (
               <Card key={hackathon.id}>
-                <CardContent>
-                  <Stack spacing={1.5}>
-                    <Box display="flex" justifyContent="space-between" gap={1} flexWrap="wrap">
-                      <Typography variant="h6">{hackathon.title}</Typography>
-                      <Chip
-                        label={hackathonStatusLabels[hackathon.status]}
-                        color={hackathon.status === "active" ? "secondary" : "default"}
-                        icon={hackathon.status === "archived" ? <ArchiveOutlinedIcon /> : undefined}
-                      />
-                    </Box>
-                    <Typography color="text.secondary">{formatHackathonPeriod(hackathon)}</Typography>
-                    <Typography>Организаторов назначено: {hackathon.organizerIds.length}</Typography>
-                    <Button
-                      variant="outlined"
-                      startIcon={<BoltOutlinedIcon />}
-                      disabled={hackathon.status === "active"}
-                      onClick={() => {
-                        void handleActivateHackathon(hackathon.id);
-                      }}
-                    >
-                      Сделать активным
-                    </Button>
-                  </Stack>
+                <CardContent className="pt-6 space-y-3">
+                  <div className="flex justify-between items-start gap-2 flex-wrap">
+                    <h4 className="font-semibold">{hackathon.title}</h4>
+                    <Badge variant={hackathon.status === "active" ? "secondary" : "default"} className="flex gap-1">
+                      {hackathon.status === "archived" && <Archive className="w-3 h-3" />}
+                      {hackathonStatusLabels[hackathon.status]}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{formatHackathonPeriod(hackathon)}</p>
+                  <p className="text-sm">Организаторов назначено: {hackathon.organizerIds.length}</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={hackathon.status === "active"}
+                    onClick={() => {
+                      void handleActivateHackathon(hackathon.id);
+                    }}
+                    className="w-full gap-2"
+                  >
+                    <Zap className="w-4 h-4" />
+                    Сделать активным
+                  </Button>
                 </CardContent>
               </Card>
             ))}
-          </Stack>
-        </Box>
-      </Stack>
+          </div>
+        </div>
+      </div>
     </GridBackGroundLayout>
   );
 }

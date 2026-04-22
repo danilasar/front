@@ -1,34 +1,15 @@
-import { TextField, type TextFieldProps } from "@mui/material";
+import { Input } from "../components/ui/input";
+import React from "react";
 
-export const InputTextField = ({ sx, ...props }: TextFieldProps) => {
+interface InputTextFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
+}
+
+export const InputTextField = ({ label, ...props }: InputTextFieldProps) => {
   return (
-    <TextField
-      sx={[(theme) => {
-        const fontColor = theme.palette.text.primary;
-        return {
-          "& .MuiOutlinedInput-root": {
-            borderRadius: 2,
-            background: theme.palette.mode === "dark"
-              ? "rgba(7, 27, 45, 0.62)"
-              : "rgba(255, 255, 255, 0.68)",
-            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.72)",
-            backdropFilter: "blur(12px)",
-          },
-          "& .MuiInputBase-input": {
-            color: fontColor,
-          },
-          "& .MuiInputLabel-root": {
-            color: fontColor,
-          },
-          "& .MuiInputLabel-root.Mui-focused": {
-            color: fontColor,
-          },
-        }
-      },
-      ...(Array.isArray(sx) ? sx : [sx])
-      ]}
-      fullWidth
-      {...props}
-    />
+    <div className="w-full">
+      {label && <label className="text-sm font-medium text-foreground mb-1 block">{label}</label>}
+      <Input {...props} className="w-full backdrop-blur-sm bg-white/60 dark:bg-slate-950/60 border border-white/30" />
+    </div>
   );
 }

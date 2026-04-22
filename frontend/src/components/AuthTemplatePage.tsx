@@ -2,7 +2,6 @@ import { useForm, type FieldValues, type Path, type RegisterOptions, type Submit
 import { CustomForm } from "../ui/CustomForm";
 import { InputTextField } from "../ui/InputTextField";
 import { GridBackGroundLayout } from "../ui/GridBackGroundLayout";
-import { Typography } from "@mui/material";
 import { Link } from "react-router-dom";
 
 type AuthTemplatePageProps<T extends FieldValues> = {
@@ -37,29 +36,29 @@ export default function AuthTemplatePage<T extends FieldValues>({
     formState: { errors },
   } = useForm<T>();
 
-
   return (
     <GridBackGroundLayout>
-      <Typography variant="h3" sx={{ padding: 1 }}>
+      <h1 className="text-3xl font-bold mb-8">
         {title}
-      </Typography>
+      </h1>
       <CustomForm onSubmit={handleSubmit(onSubmit)} buttonText={submitButtonText}>
         {fields.map((field) => (
-          <InputTextField
-            label={field.label}
-            type={field.type}
-            key={field.name}
-            margin="normal"
-            {...register(field.name, field.rules)}
-            error={!!errors[field.name]}
-            helperText={errors[field.name]?.message as string}
-          />
+          <div key={field.name} className="w-full mb-4">
+            <InputTextField
+              label={field.label}
+              type={field.type}
+              {...register(field.name, field.rules)}
+            />
+            {errors[field.name] && (
+              <p className="text-red-500 text-sm mt-1">{errors[field.name]?.message as string}</p>
+            )}
+          </div>
         ))}
       </CustomForm>
-      <Typography sx={{ mt: 2 }}>
+      <p className="mt-4 text-center">
         {switchText}{" "}
-        <Link to={switchTo} >{switchLinkText}</Link>
-      </Typography>
+        <Link to={switchTo} className="text-primary hover:underline">{switchLinkText}</Link>
+      </p>
     </GridBackGroundLayout >
   );
 }

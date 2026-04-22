@@ -1,24 +1,16 @@
 import { useEffect, useState } from "react";
-import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
-import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import PictureAsPdfOutlinedIcon from "@mui/icons-material/PictureAsPdfOutlined";
+import { Plus, Upload, Trash2, FileText, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert";
+import { Button } from "../components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
+import { Badge } from "../components/ui/badge";
 import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Checkbox,
-  Chip,
-  FormControl,
-  FormControlLabel,
-  InputLabel,
-  MenuItem,
   Select,
-  Stack,
-  Typography,
-} from "@mui/material";
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select";
 import { Link, useParams } from "react-router-dom";
 import { GridBackGroundLayout } from "../ui/GridBackGroundLayout";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
@@ -110,8 +102,8 @@ export default function HackathonDetails() {
   };
 
   return (
-    <GridBackGroundLayout sx={{ py: 14 }}>
-      <Stack spacing={3} sx={{ width: "min(900px, 100%)", px: 2 }}>
+    <GridBackGroundLayout className="py-14">
+      <div className="w-full max-w-4xl px-2 space-y-6">
         {hackathon && (
           <>
             <Card>
@@ -343,7 +335,7 @@ export default function HackathonDetails() {
             </Stack>
           </>
         )}
-      </Stack>
+      </div>
     </GridBackGroundLayout>
   );
 }
