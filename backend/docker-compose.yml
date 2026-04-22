@@ -1,0 +1,45 @@
+services:
+  db:
+    build: .
+    container_name: axum_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    expose:
+      - "${POSTGRES_PORT}"
+    ports:
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+    networks:
+      app_network:
+        ipv4_address: 10.100.0.2
+    volumes:
+      - postgres_data:/data/postgres
+      - ./db/init-scripts:/docker-entrypoint-initdb.d
+    command: -p ${POSTGRES_PORT}
+
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "80:80"
+    networks:
+      app_network:
+        ipv4_address: 10.100.0.3
+    volumes:
+       - pgadmin:/var/lib/pgadmin
+
+volumes:
+  pgadmin:
+  postgres_data:
+
+networks:
+  app_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.100.0.0/16

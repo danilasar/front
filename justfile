@@ -6,16 +6,33 @@ mock-backend:
 frontend:
     cd frontend && VITE_API_URL=http://127.0.0.1:8000/api/v1 npm run dev -- --host 127.0.0.1
 
+backend:
+    cd backend && cargo run
+
 dev:
     trap 'kill 0' EXIT; \
     node mock-backend/server.mjs & \
     cd frontend && VITE_API_URL=http://127.0.0.1:8000/api/v1 npm run dev -- --host 127.0.0.1
 
+dev-real:
+    trap 'kill 0' EXIT; \
+    cd backend && cargo run & \
+    cd frontend && VITE_API_URL=http://127.0.0.1:8000/api/v1 npm run dev -- --host 127.0.0.1
+
 test-frontend:
     cd frontend && npm test
+
+test-backend:
+    cd backend && cargo test
 
 lint-frontend:
     cd frontend && npm run lint
 
 build-frontend:
     cd frontend && npm run build
+
+db-up:
+    cd backend && docker compose --env-file .env up -d --build
+
+db-down:
+    cd backend && docker compose down
