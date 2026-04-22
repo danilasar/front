@@ -152,11 +152,11 @@ Invite onboarding: приглашенный участник может откр
 
 Модерация команд: из UI доступны допуск, отклонение, дисквалификация команды и дисквалификация отдельного участника.
 
-Экспорт заявок: текущую таблицу заявок можно выгрузить в CSV или XLSX из UI.
+Экспорт заявок: UI запрашивает CSV или XLSX через backend export endpoint, генерация файла не выполняется на фронтенде.
 
 Redux/API: подключены слайсы `auth`, `settings`, `hackathons`, `teams`, `admin`; legacy `quotes` еще остается. API-адаптеры лежат в `frontend/src/api/hackathonApi.ts`.
 
-Доменные helpers: `frontend/src/domain/access.ts`, `adminForms.ts`, `teamForms.ts`, `teamModeration.ts`, `teamExport.ts`, `hackathonManagement.ts`, `rulesUpload.ts`, `teamFieldForms.ts`, `teamFieldValues.ts`, `inviteForms.ts` покрывают правила доступа, валидацию, преобразование form values в payload, отображение модерационных данных, экспорт заявок, фильтрацию хакатонов, проверку PDF-регламента, конструктор полей команды, значения этих полей в заявке и invite onboarding.
+Доменные helpers: `frontend/src/domain/access.ts`, `adminForms.ts`, `teamForms.ts`, `teamModeration.ts`, `hackathonManagement.ts`, `rulesUpload.ts`, `teamFieldForms.ts`, `teamFieldValues.ts`, `inviteForms.ts` покрывают правила доступа, валидацию, преобразование form values в payload, отображение модерационных данных, фильтрацию хакатонов, проверку PDF-регламента, конструктор полей команды, значения этих полей в заявке и invite onboarding.
 
 Тесты: `tests/access.test.ts` покрывает правила доступа, формы админки и формы командной заявки. Перед документированием проходили `npm run lint`, `npm test`, `npm run build`.
 

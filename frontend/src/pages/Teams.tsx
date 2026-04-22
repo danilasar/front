@@ -36,10 +36,11 @@ import {
   clearInvitationLinks,
   createTeamApplication,
   disqualifyTeamMember,
+  exportTeamsFile,
   fetchTeams,
   updateTeamStatus,
 } from "../store/teams";
-import type { TeamStatus } from "../domain/types";
+import type { ExportFormat, TeamStatus } from "../domain/types";
 import { InputTextField } from "../ui/InputTextField";
 import {
   buildInvitationLinkViews,
@@ -65,7 +66,6 @@ import {
   teamStatusOptions,
   type TeamStatusFilter,
 } from "../domain/teamModeration";
-import { buildTeamsCsv, buildTeamsXlsx } from "../domain/teamExport";
 import { emptyFieldValue, prepareTeamFieldValues, validateRequiredTeamFields } from "../domain/teamFieldValues";
 import type { DynamicFieldValue, FormField } from "../domain/types";
 
@@ -272,12 +272,11 @@ export default function Teams() {
     await dispatch(disqualifyTeamMember({ hackathonId, teamId, memberId }));
   };
 
-  const handleExportCsv = () => {
-    downloadBlob(new Blob([buildTeamsCsv(teams)], { type: "text/csv;charset=utf-8" }), "teams.csv");
-  };
-
-  const handleExportXlsx = () => {
-    downloadBlob(buildTeamsXlsx(teams), "teams.xlsx");
+  const handleExport = async (format: ExportFormat) => {
+    if (!hackathonId) return;
+    const blob = await dispatch(exportTeamsFile({ hackathonId, format })).unwrap();
+    if (!blob) return;
+    downloadBlob(blob, `teams.${format}`);
   };
 
   return (
@@ -465,8 +464,8 @@ export default function Teams() {
                     type="button"
                     variant="outlined"
                     startIcon={<FileDownloadOutlinedIcon />}
-                    disabled={teams.length === 0}
-                    onClick={handleExportCsv}
+                    disabled={!managementAccess.allowed || teams.length === 0}
+                    onClick={() => void handleExport("csv")}
                   >
                     CSV
                   </Button>
@@ -474,8 +473,8 @@ export default function Teams() {
                     type="button"
                     variant="outlined"
                     startIcon={<FileDownloadOutlinedIcon />}
-                    disabled={teams.length === 0}
-                    onClick={handleExportXlsx}
+                    disabled={!managementAccess.allowed || teams.length === 0}
+                    onClick={() => void handleExport("xlsx")}
                   >
                     XLSX
                   </Button>

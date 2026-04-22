@@ -27,7 +27,6 @@ import {
   normalizeModerationReason,
   teamStatusLabels,
 } from "../frontend/src/domain/teamModeration.ts";
-import { buildTeamExportRows, buildTeamsCsv, buildTeamsXlsx } from "../frontend/src/domain/teamExport.ts";
 import {
   filterHackathons,
   formatHackathonPeriod,
@@ -48,7 +47,7 @@ import {
   prepareTeamFieldValues,
   validateRequiredTeamFields,
 } from "../frontend/src/domain/teamFieldValues.ts";
-import type { FormField, Hackathon, Team, UserProfile } from "../frontend/src/domain/types.ts";
+import type { FormField, Hackathon, UserProfile } from "../frontend/src/domain/types.ts";
 
 const hackathon = (organizerIds: string[]): Pick<Hackathon, "organizerIds"> => ({
   organizerIds,
@@ -302,65 +301,6 @@ test("moderation helpers находят капитана и нормализую
 test("дата подачи команды форматируется для таблицы заявок", () => {
   assert.equal(formatTeamDate(null), "Не подана");
   assert.match(formatTeamDate("2026-06-01T12:30:00.000Z"), /\d{2}\.\d{2}\.\d{4}/);
-});
-
-const exportTeam: Team = {
-  id: "team-1",
-  hackathonId: "hackathon-1",
-  name: "Aero Team",
-  status: "admitted",
-  fields: { track: "backend" },
-  members: [
-    {
-      id: "member-1",
-      user: null,
-      source: "existing_user",
-      login: "alice",
-      fullName: "Alice Captain",
-      email: null,
-      captain: true,
-      status: "active",
-      profileFields: {},
-    },
-    {
-      id: "member-2",
-      user: null,
-      source: "invited_new_user",
-      login: null,
-      fullName: "Bob Newbie",
-      email: "bob@example.test",
-      captain: false,
-      status: "pending_invitation",
-      profileFields: {},
-    },
-  ],
-  submittedAt: "2026-06-01T12:30:00.000Z",
-  moderationReason: "ok",
-  createdAt: "2026-06-01T12:00:00.000Z",
-  updatedAt: "2026-06-01T12:30:00.000Z",
-};
-
-test("экспорт команд готовит строки и CSV", () => {
-  const rows = buildTeamExportRows([exportTeam]);
-  const csv = buildTeamsCsv([exportTeam]);
-
-  assert.equal(rows[0].team, "Aero Team");
-  assert.equal(rows[0].status, "Допущена");
-  assert.equal(rows[0].captain, "Alice Captain");
-  assert.match(csv, /^﻿Команда,Статус,Капитан/);
-  assert.match(csv, /Aero Team/);
-  assert.match(csv, /Bob Newbie/);
-});
-
-test("экспорт XLSX создает OpenXML zip blob", async () => {
-  const blob = buildTeamsXlsx([exportTeam]);
-  const bytes = new Uint8Array(await blob.arrayBuffer());
-
-  assert.equal(blob.type, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-  assert.equal(bytes[0], 0x50);
-  assert.equal(bytes[1], 0x4B);
-  assert.equal(bytes[2], 0x03);
-  assert.equal(bytes[3], 0x04);
 });
 
 const fullHackathon = (id: string, status: Hackathon["status"]): Hackathon => ({

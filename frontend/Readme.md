@@ -18,7 +18,7 @@ Implemented user-facing scenarios:
 - view team applications in a status-filtered table;
 - moderate teams by admitting, rejecting, or disqualifying them;
 - disqualify individual team members;
-- export team applications to CSV and XLSX.
+- download backend-generated team application exports as CSV and XLSX.
 
 Implemented admin scenarios:
 

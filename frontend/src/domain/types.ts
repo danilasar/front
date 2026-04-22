@@ -12,6 +12,8 @@ export type TeamStatus =
   | "disqualified"
   | "withdrawn";
 
+export type ExportFormat = "csv" | "xlsx";
+
 export type FormFieldScope = "profile" | "team" | "feedback";
 
 export type FormFieldType =

@@ -316,6 +316,236 @@ function legacyQuote(team = teams[0]) {
   };
 }
 
+const exportHeaders = ["Команда", "Статус", "Капитан", "Состав", "Дата подачи", "Причина"];
+
+const exportTeamStatusLabels = {
+  draft: "Черновик",
+  submitted: "На рассмотрении",
+  admitted: "Допущена",
+  rejected: "Отклонена",
+  disqualified: "Дисквалифицирована",
+  withdrawn: "Снята",
+};
+
+const exportMemberStatusLabels = {
+  active: "Активен",
+  pending_invitation: "Ждет приглашение",
+  disqualified: "Дисквалифицирован",
+};
+
+function formatExportDate(value) {
+  if (!value) return "Не подана";
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
+function exportRows(hackathonId) {
+  return teams
+    .filter((team) => team.hackathonId === hackathonId)
+    .map((team) => {
+      const captain = team.members.find((member) => member.captain);
+      return [
+        team.name,
+        exportTeamStatusLabels[team.status] ?? team.status,
+        captain?.fullName ?? "",
+        team.members
+          .map((member) => `${member.fullName}${member.captain ? " (капитан)" : ""} - ${exportMemberStatusLabels[member.status] ?? member.status}`)
+          .join("; "),
+        formatExportDate(team.submittedAt),
+        team.moderationReason ?? "",
+      ];
+    });
+}
+
+function escapeCsvField(value) {
+  const text = String(value);
+  if (!/[",\n\r;]/.test(text)) return text;
+  return `"${text.replaceAll("\"", "\"\"")}"`;
+}
+
+function buildTeamsCsv(hackathonId) {
+  return `\uFEFF${[exportHeaders, ...exportRows(hackathonId)]
+    .map((row) => row.map(escapeCsvField).join(","))
+    .join("\n")}\n`;
+}
+
+function escapeXml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll("\"", "&quot;")
+    .replaceAll("'", "&apos;");
+}
+
+function columnName(index) {
+  let value = index + 1;
+  let name = "";
+  while (value > 0) {
+    const remainder = (value - 1) % 26;
+    name = String.fromCharCode(65 + remainder) + name;
+    value = Math.floor((value - 1) / 26);
+  }
+  return name;
+}
+
+function worksheetCell(rowIndex, columnIndex, value) {
+  return `<c r="${columnName(columnIndex)}${rowIndex}" t="inlineStr"><is><t>${escapeXml(value)}</t></is></c>`;
+}
+
+function buildWorksheetXml(hackathonId) {
+  const rows = [exportHeaders, ...exportRows(hackathonId)];
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <sheetData>${rows.map((row, rowIndex) => {
+    const excelRow = rowIndex + 1;
+    return `<row r="${excelRow}">${row.map((value, columnIndex) => worksheetCell(excelRow, columnIndex, value)).join("")}</row>`;
+  }).join("")}</sheetData>
+</worksheet>`;
+}
+
+const crcTable = Array.from({ length: 256 }, (_, index) => {
+  let value = index;
+  for (let bit = 0; bit < 8; bit += 1) {
+    value = value & 1 ? 0xEDB88320 ^ (value >>> 1) : value >>> 1;
+  }
+  return value >>> 0;
+});
+
+function crc32(data) {
+  let crc = 0xFFFFFFFF;
+  data.forEach((byte) => {
+    crc = crcTable[(crc ^ byte) & 0xFF] ^ (crc >>> 8);
+  });
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+
+function writeUint16(target, offset, value) {
+  target[offset] = value & 0xFF;
+  target[offset + 1] = (value >>> 8) & 0xFF;
+}
+
+function writeUint32(target, offset, value) {
+  target[offset] = value & 0xFF;
+  target[offset + 1] = (value >>> 8) & 0xFF;
+  target[offset + 2] = (value >>> 16) & 0xFF;
+  target[offset + 3] = (value >>> 24) & 0xFF;
+}
+
+function concatBytes(parts) {
+  const totalLength = parts.reduce((sum, part) => sum + part.length, 0);
+  const result = new Uint8Array(totalLength);
+  let offset = 0;
+  parts.forEach((part) => {
+    result.set(part, offset);
+    offset += part.length;
+  });
+  return result;
+}
+
+function buildZip(files) {
+  const encoder = new TextEncoder();
+  const localParts = [];
+  const centralParts = [];
+  let offset = 0;
+  files.forEach((file) => {
+    const name = encoder.encode(file.path);
+    const data = encoder.encode(file.content);
+    const crc = crc32(data);
+    const localHeader = new Uint8Array(30 + name.length);
+    writeUint32(localHeader, 0, 0x04034B50);
+    writeUint16(localHeader, 4, 20);
+    writeUint16(localHeader, 6, 0);
+    writeUint16(localHeader, 8, 0);
+    writeUint16(localHeader, 10, 0);
+    writeUint16(localHeader, 12, 0);
+    writeUint32(localHeader, 14, crc);
+    writeUint32(localHeader, 18, data.length);
+    writeUint32(localHeader, 22, data.length);
+    writeUint16(localHeader, 26, name.length);
+    writeUint16(localHeader, 28, 0);
+    localHeader.set(name, 30);
+    localParts.push(localHeader, data);
+    const centralHeader = new Uint8Array(46 + name.length);
+    writeUint32(centralHeader, 0, 0x02014B50);
+    writeUint16(centralHeader, 4, 20);
+    writeUint16(centralHeader, 6, 20);
+    writeUint16(centralHeader, 8, 0);
+    writeUint16(centralHeader, 10, 0);
+    writeUint16(centralHeader, 12, 0);
+    writeUint16(centralHeader, 14, 0);
+    writeUint32(centralHeader, 16, crc);
+    writeUint32(centralHeader, 20, data.length);
+    writeUint32(centralHeader, 24, data.length);
+    writeUint16(centralHeader, 28, name.length);
+    writeUint16(centralHeader, 30, 0);
+    writeUint16(centralHeader, 32, 0);
+    writeUint16(centralHeader, 34, 0);
+    writeUint16(centralHeader, 36, 0);
+    writeUint32(centralHeader, 38, 0);
+    writeUint32(centralHeader, 42, offset);
+    centralHeader.set(name, 46);
+    centralParts.push(centralHeader);
+    offset += localHeader.length + data.length;
+  });
+  const centralDirectory = concatBytes(centralParts);
+  const end = new Uint8Array(22);
+  writeUint32(end, 0, 0x06054B50);
+  writeUint16(end, 4, 0);
+  writeUint16(end, 6, 0);
+  writeUint16(end, 8, files.length);
+  writeUint16(end, 10, files.length);
+  writeUint32(end, 12, centralDirectory.length);
+  writeUint32(end, 16, offset);
+  writeUint16(end, 20, 0);
+  return concatBytes([...localParts, centralDirectory, end]);
+}
+
+function buildTeamsXlsx(hackathonId) {
+  return Buffer.from(buildZip([
+    {
+      path: "[Content_Types].xml",
+      content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+  <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+</Types>`,
+    },
+    {
+      path: "_rels/.rels",
+      content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+</Relationships>`,
+    },
+    {
+      path: "xl/workbook.xml",
+      content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <sheets><sheet name="Заявки" sheetId="1" r:id="rId1"/></sheets>
+</workbook>`,
+    },
+    {
+      path: "xl/_rels/workbook.xml.rels",
+      content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+</Relationships>`,
+    },
+    {
+      path: "xl/worksheets/sheet1.xml",
+      content: buildWorksheetXml(hackathonId),
+    },
+  ]));
+}
+
 async function handleLegacy(req, res, url, path, body) {
   if (req.method === "POST" && path === "/Auth/Login") {
     const found = users.find((item) => item.email === body.email) ?? users[0];
@@ -874,7 +1104,18 @@ async function handleApi(req, res, url, path, body) {
   if (exportMatch && req.method === "GET") {
     requireAssignedOrganizer(req, res, exportMatch[1]);
     if (res.writableEnded) return;
-    send(res, 200, "team,status\nКоманда Демо,submitted\n", { "Content-Type": "text/csv; charset=utf-8" });
+    const format = url.searchParams.get("format");
+    if (format === "xlsx") {
+      send(res, 200, buildTeamsXlsx(exportMatch[1]), {
+        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": "attachment; filename=\"teams.xlsx\"",
+      });
+      return;
+    }
+    send(res, 200, buildTeamsCsv(exportMatch[1]), {
+      "Content-Type": "text/csv; charset=utf-8",
+      "Content-Disposition": "attachment; filename=\"teams.csv\"",
+    });
     return;
   }
 

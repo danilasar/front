@@ -5,6 +5,7 @@ import type {
   CreateHackathonRequest,
   CreateOrganizerRequest,
   CreateTeamApplicationRequest,
+  ExportFormat,
   FormField,
   FormFieldScope,
   Hackathon,
@@ -140,6 +141,14 @@ export const teamApi = {
 
   async disqualifyMember(hackathonId: string, teamId: string, memberId: string) {
     const response = await api.post<Team>(`/hackathons/${hackathonId}/teams/${teamId}/members/${memberId}/disqualify`);
+    return response.data;
+  },
+
+  async exportTeams(hackathonId: string, format: ExportFormat) {
+    const response = await api.get<Blob>(`/hackathons/${hackathonId}/exports/teams`, {
+      params: { format },
+      responseType: "blob",
+    });
     return response.data;
   },
 };

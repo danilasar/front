@@ -338,12 +338,6 @@ API-адаптеры находятся в `src/api/hackathonApi.ts`:
 - форматирование даты подачи;
 - нормализация moderation reason.
 
-`src/domain/teamExport.ts`
-
-- подготовка строк экспорта из команд;
-- генерация CSV;
-- генерация минимального OpenXML XLSX без внешней зависимости.
-
 `src/domain/hackathonManagement.ts`
 
 - подписи статусов хакатонов;
@@ -406,7 +400,7 @@ API-адаптеры находятся в `src/api/hackathonApi.ts`:
 - поле причины модерационного решения;
 - действия организатора: допустить, отклонить, дисквалифицировать команду;
 - дисквалификация отдельных участников из состава;
-- экспорт текущей таблицы заявок в CSV и XLSX.
+- запрос backend-экспорта заявок в CSV и XLSX.
 
 `AdminPanel`
 
@@ -467,7 +461,8 @@ Legacy страницы:
 - teams;
 - team status;
 - member actions;
-- feedback/export;
+- feedback;
+- export teams;
 - часть legacy quote endpoints.
 
 Для командной заявки mock backend:
@@ -484,6 +479,12 @@ Legacy страницы:
 - принимает `PATCH /hackathons/:hackathonId/teams/:teamId/status`;
 - сохраняет `moderationReason`;
 - принимает `POST /hackathons/:hackathonId/teams/:teamId/members/:memberId/disqualify`.
+
+Для экспорта mock backend:
+
+- принимает `GET /hackathons/:hackathonId/exports/teams?format=csv`;
+- принимает `GET /hackathons/:hackathonId/exports/teams?format=xlsx`;
+- формирует файл на backend-стороне и отдает его как binary response.
 
 Для регламента mock backend:
 
@@ -524,7 +525,6 @@ Legacy страницы:
 - преобразование командной заявки в payload;
 - подготовка отображения invite-ссылок;
 - helpers модерации команды: капитан, reason, подписи статусов, дата подачи.
-- helpers экспорта команд: строки, CSV, XLSX zip blob.
 - helpers управления хакатонами: фильтр статуса и период.
 - валидация PDF-регламента.
 - helpers конструктора полей команды: key, label, options, payload.
@@ -561,7 +561,7 @@ npm run build
 - таблица заявок с фильтром по статусу;
 - управление статусами команд: допуск, отклонение, дисквалификация;
 - дисквалификация отдельных участников из UI;
-- экспорт CSV/XLSX из таблицы заявок;
+- скачивание CSV/XLSX через backend export endpoint;
 - доменные тесты формы доступа, админки, команд и invite onboarding.
 
 Не готово:

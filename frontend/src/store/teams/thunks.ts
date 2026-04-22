@@ -2,7 +2,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import type { AxiosError } from "axios";
 import { teamApi } from "../../api/hackathonApi";
 import type { ApiError } from "../../api/type";
-import type { CreateTeamApplicationRequest, TeamStatus } from "../../domain/types";
+import type { CreateTeamApplicationRequest, ExportFormat, TeamStatus } from "../../domain/types";
 import { getErrorMessage } from "../../utils/errorTemplateMessage";
 import { setError, startLoading, stopLoading } from "../settings";
 import { setInvitationLinks, setTeams, upsertTeam } from "./slice";
@@ -70,6 +70,22 @@ export const disqualifyTeamMember = createAsyncThunk(
       const response = await teamApi.disqualifyMember(data.hackathonId, data.teamId, data.memberId);
       dispatch(upsertTeam(response));
       return response;
+    } catch (e: unknown) {
+      const error = e as AxiosError<ApiError>;
+      dispatch(setError(getErrorMessage(error)));
+      return null;
+    } finally {
+      dispatch(stopLoading());
+    }
+  },
+);
+
+export const exportTeamsFile = createAsyncThunk(
+  "teams/export",
+  async (data: { hackathonId: string; format: ExportFormat }, { dispatch }) => {
+    try {
+      dispatch(startLoading());
+      return await teamApi.exportTeams(data.hackathonId, data.format);
     } catch (e: unknown) {
       const error = e as AxiosError<ApiError>;
       dispatch(setError(getErrorMessage(error)));
