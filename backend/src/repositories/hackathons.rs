@@ -1,6 +1,6 @@
 use sqlx::{Executor, Postgres};
 use uuid::Uuid;
-use crate::models::hackathons::{Hackathon, HackathonStatus};
+use crate::models::hackathons::Hackathon;
 use crate::schemas::hackathons::CreateHackathonRequest;
 
 pub trait HackathonRepository {
@@ -26,7 +26,7 @@ impl HackathonRepo {
 impl HackathonRepository for HackathonRepo {
     async fn get_all(&self) -> sqlx::Result<Vec<Hackathon>> {
         sqlx::query_as::<_, Hackathon>(
-            r#"SELECT id, title, description, status as "status: HackathonStatus", starts_at, ends_at, registration_opens_at, registration_closes_at, min_team_size, max_team_size, rules_file_id, hero_title, hero_subtitle, cover_file_id, landing_content, created_at, updated_at FROM hackathons ORDER BY created_at DESC"#
+            r#"SELECT id, title, description, status, starts_at, ends_at, registration_opens_at, registration_closes_at, min_team_size, max_team_size, rules_file_id, hero_title, hero_subtitle, cover_file_id, landing_content, created_at, updated_at FROM hackathons ORDER BY created_at DESC"#
         )
         .fetch_all(self.db_pool.as_ref())
         .await
@@ -34,7 +34,7 @@ impl HackathonRepository for HackathonRepo {
 
     async fn get_by_id(&self, id: &Uuid) -> sqlx::Result<Option<Hackathon>> {
         sqlx::query_as::<_, Hackathon>(
-            r#"SELECT id, title, description, status as "status: HackathonStatus", starts_at, ends_at, registration_opens_at, registration_closes_at, min_team_size, max_team_size, rules_file_id, hero_title, hero_subtitle, cover_file_id, landing_content, created_at, updated_at FROM hackathons WHERE id = $1"#
+            r#"SELECT id, title, description, status, starts_at, ends_at, registration_opens_at, registration_closes_at, min_team_size, max_team_size, rules_file_id, hero_title, hero_subtitle, cover_file_id, landing_content, created_at, updated_at FROM hackathons WHERE id = $1"#
         )
         .bind(id)
         .fetch_optional(self.db_pool.as_ref())
@@ -43,7 +43,7 @@ impl HackathonRepository for HackathonRepo {
 
     async fn get_active(&self) -> sqlx::Result<Option<Hackathon>> {
         sqlx::query_as::<_, Hackathon>(
-            r#"SELECT id, title, description, status as "status: HackathonStatus", starts_at, ends_at, registration_opens_at, registration_closes_at, min_team_size, max_team_size, rules_file_id, hero_title, hero_subtitle, cover_file_id, landing_content, created_at, updated_at FROM hackathons WHERE status = 'active' LIMIT 1"#
+            r#"SELECT id, title, description, status, starts_at, ends_at, registration_opens_at, registration_closes_at, min_team_size, max_team_size, rules_file_id, hero_title, hero_subtitle, cover_file_id, landing_content, created_at, updated_at FROM hackathons WHERE status = 'active' LIMIT 1"#
         )
         .fetch_optional(self.db_pool.as_ref())
         .await
@@ -64,7 +64,7 @@ impl HackathonRepository for HackathonRepo {
         sqlx::query_as::<_, Hackathon>(
             r#"INSERT INTO hackathons (id, title, description, status, starts_at, ends_at, registration_opens_at, registration_closes_at, min_team_size, max_team_size, hero_title, hero_subtitle, cover_file_id, landing_content)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-            RETURNING id, title, description, status as "status: HackathonStatus", starts_at, ends_at, registration_opens_at, registration_closes_at, min_team_size, max_team_size, rules_file_id, hero_title, hero_subtitle, cover_file_id, landing_content, created_at, updated_at"#
+            RETURNING id, title, description, status, starts_at, ends_at, registration_opens_at, registration_closes_at, min_team_size, max_team_size, rules_file_id, hero_title, hero_subtitle, cover_file_id, landing_content, created_at, updated_at"#
         )
         .bind(id)
         .bind(req.title)

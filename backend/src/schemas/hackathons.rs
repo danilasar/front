@@ -18,6 +18,7 @@ pub struct HackathonResponse {
     pub min_team_size: i32,
     pub max_team_size: i32,
     pub rules_file: Option<FileAsset>,
+    pub organizer_ids: Vec<Uuid>,
     pub landing: HackathonLanding,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -56,6 +57,7 @@ impl From<Hackathon> for HackathonResponse {
                 id,
                 url: format!("/api/v1/files/{}", id),
             }),
+            organizer_ids: Vec::new(),
             landing: HackathonLanding {
                 hero_title: h.hero_title,
                 hero_subtitle: h.hero_subtitle,

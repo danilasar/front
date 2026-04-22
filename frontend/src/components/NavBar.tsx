@@ -19,8 +19,8 @@ export default function NavBar() {
 
   return (
     <div className="fixed left-1/2 top-3 z-50 w-[min(1120px,calc(100vw-24px))] -translate-x-1/2 sm:top-5">
-      <div className="rounded-lg border border-white/70 bg-white/82 px-2 shadow-lg shadow-slate-900/10 backdrop-blur-2xl dark:border-white/10 dark:bg-slate-950/78 dark:shadow-black/20">
-        <div className="flex min-h-14 items-center gap-1 overflow-x-auto px-2 sm:px-4">
+      <div className="aero-nav rounded-lg border border-white/70 px-2 backdrop-blur-2xl dark:border-white/10">
+        <div className="flex min-h-14 items-center gap-4 overflow-x-auto px-2 sm:px-4">
           <Link to="/" className="mr-1 flex flex-shrink-0 items-center gap-2 pr-2">
             <Icon className="h-8 w-8 text-primary" />
             <span className="hidden text-sm font-bold tracking-normal sm:inline">HackFlow</span>
@@ -46,7 +46,7 @@ export default function NavBar() {
           )}
           <button 
             onClick={toggleTheme}
-            className="ml-auto inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+            className="aero-button aero-button-secondary ml-auto inline-flex h-10 w-10 flex-shrink-0 items-center justify-center text-foreground"
             title={darkMode ? "Светлая тема" : "Темная тема"}
           >
             {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}

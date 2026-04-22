@@ -22,13 +22,6 @@ export default function Home() {
         <CardContent className="p-6 md:p-12 relative">
           <div className="absolute inset-0 pointer-events-none bg-gradient-to-r from-transparent via-white/30 to-transparent dark:via-white/10" />
           <div className="flex flex-col items-center gap-4 relative">
-            <Icon className="w-28 h-28 flex-shrink-0 text-green-500 drop-shadow-lg" />
-            <h1 className="text-4xl font-bold">
-              Менеджер хакатонов
-            </h1>
-            <p className="text-lg max-w-2xl text-muted-foreground">
-              Управляйте мероприятиями, регистрацией, командами и экспортом данных из одного интерфейса.
-            </p>
             {active && (
               <div className="flex flex-col items-center gap-2 my-6">
                 <Badge variant="secondary">Активный хакатон</Badge>

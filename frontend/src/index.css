@@ -1,48 +1,48 @@
 @import "tailwindcss";
 
 :root {
-  --background: 208 42% 97%;
+  --background: 188 68% 96%;
   --foreground: 220 28% 13%;
-  --card: 0 0% 100%;
+  --card: 186 74% 98%;
   --card-foreground: 220 28% 13%;
-  --popover: 0 0% 100%;
+  --popover: 186 74% 98%;
   --popover-foreground: 220 28% 13%;
-  --primary: 165 76% 32%;
+  --primary: 155 78% 37%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 214 35% 91%;
+  --secondary: 190 58% 88%;
   --secondary-foreground: 217 27% 18%;
-  --muted: 210 30% 94%;
+  --muted: 190 45% 92%;
   --muted-foreground: 216 14% 42%;
-  --accent: 43 86% 58%;
+  --accent: 198 92% 62%;
   --accent-foreground: 220 28% 13%;
   --destructive: 0 72% 45%;
   --destructive-foreground: 0 0% 100%;
-  --border: 214 24% 84%;
-  --input: 214 24% 84%;
-  --ring: 165 76% 32%;
+  --border: 188 45% 75%;
+  --input: 188 45% 75%;
+  --ring: 155 78% 37%;
   --radius: 0.5rem;
 }
 
 .dark {
-  --background: 216 31% 8%;
+  --background: 207 42% 8%;
   --foreground: 210 32% 94%;
-  --card: 218 28% 12%;
+  --card: 203 38% 13%;
   --card-foreground: 210 32% 94%;
-  --popover: 218 28% 12%;
+  --popover: 203 38% 13%;
   --popover-foreground: 210 32% 94%;
-  --primary: 164 73% 42%;
+  --primary: 158 73% 45%;
   --primary-foreground: 220 28% 9%;
-  --secondary: 216 22% 18%;
+  --secondary: 194 32% 19%;
   --secondary-foreground: 210 32% 94%;
-  --muted: 217 21% 17%;
+  --muted: 202 27% 17%;
   --muted-foreground: 213 16% 68%;
-  --accent: 43 86% 58%;
+  --accent: 197 88% 61%;
   --accent-foreground: 220 28% 10%;
   --destructive: 0 66% 48%;
   --destructive-foreground: 0 0% 100%;
-  --border: 216 19% 24%;
-  --input: 216 19% 24%;
-  --ring: 164 73% 42%;
+  --border: 194 27% 27%;
+  --input: 194 27% 27%;
+  --ring: 158 73% 45%;
 }
 
 * {
@@ -68,4 +68,179 @@ input,
 select,
 textarea {
   font: inherit;
+}
+
+.aero-page {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(205, 244, 244, 0.46) 38%, rgba(242, 250, 255, 0.9)),
+    linear-gradient(135deg, rgba(48, 214, 172, 0.28), transparent 34%, rgba(76, 176, 255, 0.2) 68%, transparent),
+    hsl(var(--background));
+}
+
+.dark .aero-page {
+  background:
+    linear-gradient(180deg, rgba(18, 42, 55, 0.94), rgba(8, 25, 35, 0.88) 45%, rgba(6, 17, 29, 0.96)),
+    linear-gradient(135deg, rgba(36, 213, 174, 0.18), transparent 35%, rgba(62, 164, 255, 0.14) 70%, transparent),
+    hsl(var(--background));
+}
+
+.aero-nav {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(208, 248, 247, 0.74) 42%, rgba(139, 218, 210, 0.66)),
+    rgba(255, 255, 255, 0.78);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.96),
+    inset 0 -1px 0 rgba(7, 121, 104, 0.16),
+    0 16px 42px rgba(12, 97, 118, 0.2);
+}
+
+.dark .aero-nav {
+  background:
+    linear-gradient(180deg, rgba(53, 94, 106, 0.88), rgba(16, 53, 65, 0.78) 45%, rgba(8, 32, 45, 0.88)),
+    rgba(10, 28, 39, 0.78);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.32),
+    0 18px 46px rgba(0, 0, 0, 0.34);
+}
+
+.aero-card {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(226, 250, 248, 0.76) 44%, rgba(255, 255, 255, 0.86)),
+    hsl(var(--card));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.96),
+    inset 0 -1px 0 rgba(24, 132, 114, 0.12),
+    0 16px 36px rgba(42, 122, 142, 0.13);
+}
+
+.aero-card::before {
+  content: "";
+  position: absolute;
+  inset: 1px 1px auto;
+  height: 42%;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.12));
+  pointer-events: none;
+}
+
+.aero-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.dark .aero-card {
+  background:
+    linear-gradient(180deg, rgba(35, 78, 92, 0.82), rgba(16, 46, 61, 0.82) 45%, rgba(10, 32, 48, 0.9)),
+    hsl(var(--card));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.36),
+    0 18px 42px rgba(0, 0, 0, 0.32);
+}
+
+.aero-button {
+  --aero-top: rgba(255, 255, 255, 0.86);
+  --aero-mid: hsl(var(--primary));
+  --aero-bottom: hsl(178 76% 68%);
+  --aero-text: hsl(var(--primary-foreground));
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 9999px;
+  border-color: rgba(255, 255, 255, 0.54);
+  background:
+    radial-gradient(farthest-corner at bottom center, rgba(255, 255, 255, 0.72), transparent 68%),
+    linear-gradient(180deg, color-mix(in oklch, var(--aero-mid), white 12%), var(--aero-bottom));
+  color: var(--aero-text);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.18),
+    0 5px 10px rgba(23, 87, 87, 0.28);
+  user-select: none;
+}
+
+.aero-button::after {
+  content: "";
+  position: absolute;
+  top: 5%;
+  left: 0.75em;
+  width: calc(100% - 1.5em);
+  height: 42%;
+  border-radius: inherit;
+  background: linear-gradient(180deg, var(--aero-top), rgba(255, 255, 255, 0.08));
+  pointer-events: none;
+  z-index: 0;
+}
+
+.aero-button > * {
+  position: relative;
+  z-index: 1;
+}
+
+.aero-button:hover,
+.aero-button:focus-visible {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.16),
+    0 7px 14px rgba(23, 87, 87, 0.32);
+}
+
+.aero-button:active {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.18),
+    0 3px 7px rgba(23, 87, 87, 0.24);
+}
+
+.aero-button-secondary,
+.aero-button-outline,
+.aero-button-ghost {
+  --aero-mid: hsl(190 68% 88%);
+  --aero-bottom: hsl(178 58% 74%);
+  --aero-text: hsl(var(--foreground));
+  border-color: rgba(77, 172, 174, 0.44);
+}
+
+.aero-button-destructive {
+  --aero-mid: hsl(0 72% 50%);
+  --aero-bottom: hsl(21 88% 64%);
+  --aero-text: white;
+}
+
+.aero-button-link {
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  text-shadow: none;
+}
+
+.aero-button-link::after {
+  display: none;
+}
+
+.aero-field {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(232, 251, 249, 0.78)),
+    hsl(var(--background));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 3px 8px rgba(35, 103, 118, 0.08);
+}
+
+.dark .aero-field {
+  background:
+    linear-gradient(180deg, rgba(30, 64, 77, 0.9), rgba(13, 36, 50, 0.88)),
+    hsl(var(--background));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 3px 8px rgba(0, 0, 0, 0.2);
+}
+
+.aero-badge {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.58);
 }

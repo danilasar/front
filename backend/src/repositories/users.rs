@@ -45,7 +45,7 @@ impl<Db: sqlx::Database> UserRepo<Db> {
 impl UserRepository for UserRepo<Postgres> {
     async fn get(&self, offset: &Offset, limit: &Limit) -> sqlx::Result<Vec<User>> {
         sqlx::query_as::<_, User>(
-            "SELECT id, full_name, email, role as \"role: Role\", password_hash, education, course, phone, telegram, vk, food_allergies, tshirt_size, avatar_file_id, profile_fields, created_at, updated_at
+            "SELECT id, full_name, email, role, password_hash, education, course, phone, telegram, vk, food_allergies, tshirt_size, avatar_file_id, profile_fields, created_at, updated_at
             FROM users
             LIMIT $1 OFFSET $2"
         )
@@ -57,7 +57,7 @@ impl UserRepository for UserRepo<Postgres> {
 
     async fn get_by_id(&self, id: &Uuid) -> sqlx::Result<Option<User>> {
         sqlx::query_as::<_, User>(
-            "SELECT id, full_name, email, role as \"role: Role\", password_hash, education, course, phone, telegram, vk, food_allergies, tshirt_size, avatar_file_id, profile_fields, created_at, updated_at FROM users WHERE id = $1"
+            "SELECT id, full_name, email, role, password_hash, education, course, phone, telegram, vk, food_allergies, tshirt_size, avatar_file_id, profile_fields, created_at, updated_at FROM users WHERE id = $1"
         )
         .bind(id)
         .fetch_optional(self.db_pool.as_ref())
@@ -66,7 +66,7 @@ impl UserRepository for UserRepo<Postgres> {
 
     async fn get_by_email(&self, email: &str) -> sqlx::Result<Option<User>> {
         sqlx::query_as::<_, User>(
-            "SELECT id, full_name, email, role as \"role: Role\", password_hash, education, course, phone, telegram, vk, food_allergies, tshirt_size, avatar_file_id, profile_fields, created_at, updated_at FROM users WHERE email = $1"
+            "SELECT id, full_name, email, role, password_hash, education, course, phone, telegram, vk, food_allergies, tshirt_size, avatar_file_id, profile_fields, created_at, updated_at FROM users WHERE email = $1"
         )
         .bind(email)
         .fetch_optional(self.db_pool.as_ref())
@@ -75,7 +75,7 @@ impl UserRepository for UserRepo<Postgres> {
 
     async fn check_login(&self, email: &str, password_hash: &str) -> sqlx::Result<Option<User>> {
         sqlx::query_as::<_, User>(
-            "SELECT id, full_name, email, role as \"role: Role\", password_hash, education, course, phone, telegram, vk, food_allergies, tshirt_size, avatar_file_id, profile_fields, created_at, updated_at
+            "SELECT id, full_name, email, role, password_hash, education, course, phone, telegram, vk, food_allergies, tshirt_size, avatar_file_id, profile_fields, created_at, updated_at
             FROM users
             WHERE email = $1 AND password_hash = $2"
         )
@@ -94,7 +94,7 @@ impl UserRepository for UserRepo<Postgres> {
         sqlx::query_as::<_, User>(
             "INSERT INTO users (id, full_name, email, role, password_hash, profile_fields)
             VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING id, full_name, email, role as \"role: Role\", password_hash, education, course, phone, telegram, vk, food_allergies, tshirt_size, avatar_file_id, profile_fields, created_at, updated_at"
+            RETURNING id, full_name, email, role, password_hash, education, course, phone, telegram, vk, food_allergies, tshirt_size, avatar_file_id, profile_fields, created_at, updated_at"
         )
         .bind(user_data.id)
         .bind(user_data.full_name)
@@ -114,7 +114,7 @@ impl UserRepository for UserRepo<Postgres> {
         sqlx::query_as::<_, User>(
             "INSERT INTO users (id, full_name, email, role, password_hash, profile_fields)
             VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING id, full_name, email, role as \"role: Role\", password_hash, education, course, phone, telegram, vk, food_allergies, tshirt_size, avatar_file_id, profile_fields, created_at, updated_at"
+            RETURNING id, full_name, email, role, password_hash, education, course, phone, telegram, vk, food_allergies, tshirt_size, avatar_file_id, profile_fields, created_at, updated_at"
         )
         .bind(user_data.id)
         .bind(user_data.full_name)

@@ -10,7 +10,7 @@ interface InputTextFieldProps extends React.InputHTMLAttributes<HTMLInputElement
 
 export const InputTextField = ({ label, className, multiline, minRows, ...props }: InputTextFieldProps) => {
   const fieldClassName = cn(
-    "w-full border border-input bg-background/80 shadow-sm backdrop-blur-sm",
+    "aero-field w-full border border-input backdrop-blur-sm",
     className,
   );
 
@@ -22,7 +22,7 @@ export const InputTextField = ({ label, className, multiline, minRows, ...props 
           {...(props as React.TextareaHTMLAttributes<HTMLTextAreaElement>)}
           rows={minRows}
           className={cn(
-            "flex min-h-24 rounded-md px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+            "aero-field flex min-h-24 rounded-md px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
             fieldClassName,
           )}
         />
