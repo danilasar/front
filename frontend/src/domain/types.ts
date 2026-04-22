@@ -12,7 +12,7 @@ export type TeamStatus =
   | "disqualified"
   | "withdrawn";
 
-export type FormFieldScope = "profile" | "registration" | "feedback";
+export type FormFieldScope = "profile" | "team" | "feedback";
 
 export type FormFieldType =
   | "text"

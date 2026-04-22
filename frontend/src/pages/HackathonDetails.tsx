@@ -21,7 +21,7 @@ export default function HackathonDetails() {
   useEffect(() => {
     if (!hackathonId) return;
     void dispatch(fetchHackathon(hackathonId));
-    void dispatch(fetchFormFields({ hackathonId, scope: "registration" }));
+    void dispatch(fetchFormFields({ hackathonId, scope: "team" }));
   }, [dispatch, hackathonId]);
 
   const access = explainHackathonManagementAccess(user, hackathon);
@@ -57,7 +57,7 @@ export default function HackathonDetails() {
             <Card>
               <CardContent>
                 <Stack spacing={1}>
-                  <Typography variant="h5">Параметры регистрации</Typography>
+                  <Typography variant="h5">Параметры команды</Typography>
                   <Typography>Размер команды: {hackathon.minTeamSize}-{hackathon.maxTeamSize}</Typography>
                   <Typography>Полей формы: {fields.length}</Typography>
                 </Stack>

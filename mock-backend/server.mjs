@@ -71,7 +71,7 @@ const formFields = [
   {
     id: ids.field,
     hackathonId: ids.hackathon,
-    scope: "registration",
+    scope: "team",
     key: "education",
     label: "Учебное заведение",
     description: null,
