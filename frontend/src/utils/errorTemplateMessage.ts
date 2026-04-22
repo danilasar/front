@@ -1,18 +1,45 @@
-import type { AxiosError } from "axios";
+import { isAxiosError } from "axios";
 import type { ApiError } from "../api/type";
 
-export function getErrorMessage(error: AxiosError<ApiError, unknown>) {
-  let message = "";
+const fallbackMessages: Record<number, string> = {
+  400: "Неверный запрос",
+  401: "Не авторизован",
+  403: "Недостаточно прав",
+  404: "Данные не найдены. Повторите запрос позже",
+  409: "Конфликт данных",
+  415: "Неподдерживаемый тип файла",
+  422: "Проверьте данные формы",
+  500: "Техническая ошибка на сервере",
+};
 
-  const status = error.response?.status ?? -1;
-  switch (status) {
-    case 400: message = "Неверный запрос"; break;
-    case 404: message = "Данные не найденны, увы. Повторите запрос позже"; break;
-    case 409: message = "Почта уже занята"; break;
-    case 422: message = "Неправильные данные"; break;
-    case 500: message = "Технические шоколадки на сервере"; break;
-    default: message = "Неизвестаная ошибка"
+export const isApiError = (value: unknown): value is ApiError => {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Partial<ApiError>;
+  return typeof candidate.code === "string" && typeof candidate.message === "string";
+};
+
+export const getApiError = (error: unknown): ApiError | null => {
+  if (!isAxiosError<ApiError>(error)) return null;
+  const data = error.response?.data;
+  return isApiError(data) ? data : null;
+};
+
+export const getApiValidationMessages = (error: unknown): string[] => {
+  const apiError = getApiError(error);
+  return apiError?.fields?.map((field) => `${field.field}: ${field.message}`) ?? [];
+};
+
+export function getErrorMessage(error: unknown) {
+  const apiError = getApiError(error);
+  if (apiError) {
+    const fieldMessages = getApiValidationMessages(error);
+    return fieldMessages.length > 0 ? `${apiError.message}: ${fieldMessages.join("; ")}` : apiError.message;
   }
 
-  return error.response?.data.message ?? message
+  if (isAxiosError(error)) {
+    const status = error.response?.status ?? -1;
+    return fallbackMessages[status] ?? "Неизвестная ошибка";
+  }
+
+  return "Неизвестная ошибка";
 }

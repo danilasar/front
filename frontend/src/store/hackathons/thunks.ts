@@ -1,7 +1,5 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import type { AxiosError } from "axios";
 import { hackathonApi } from "../../api/hackathonApi";
-import type { ApiError } from "../../api/type";
 import type { CreateHackathonRequest, FormField, FormFieldScope } from "../../domain/types";
 import { getErrorMessage } from "../../utils/errorTemplateMessage";
 import { setError, startLoading, stopLoading } from "../settings";
@@ -22,8 +20,7 @@ export const fetchHackathons = createAsyncThunk("hackathons/list", async (_, { d
     dispatch(setHackathons(response.items));
     return response.items;
   } catch (e: unknown) {
-    const error = e as AxiosError<ApiError>;
-    dispatch(setError(getErrorMessage(error)));
+    dispatch(setError(getErrorMessage(e)));
     return [];
   } finally {
     dispatch(stopLoading());
@@ -51,8 +48,7 @@ export const fetchHackathon = createAsyncThunk("hackathons/get", async (id: stri
     dispatch(setCurrentHackathon(response));
     return response;
   } catch (e: unknown) {
-    const error = e as AxiosError<ApiError>;
-    dispatch(setError(getErrorMessage(error)));
+    dispatch(setError(getErrorMessage(e)));
     return null;
   } finally {
     dispatch(stopLoading());
@@ -68,8 +64,7 @@ export const createHackathon = createAsyncThunk(
       dispatch(upsertHackathon(response));
       return response;
     } catch (e: unknown) {
-      const error = e as AxiosError<ApiError>;
-      dispatch(setError(getErrorMessage(error)));
+      dispatch(setError(getErrorMessage(e)));
       return null;
     } finally {
       dispatch(stopLoading());
@@ -87,8 +82,7 @@ export const activateHackathon = createAsyncThunk(
       dispatch(setActiveHackathon(response));
       return response;
     } catch (e: unknown) {
-      const error = e as AxiosError<ApiError>;
-      dispatch(setError(getErrorMessage(error)));
+      dispatch(setError(getErrorMessage(e)));
       return null;
     } finally {
       dispatch(stopLoading());
@@ -105,8 +99,7 @@ export const uploadHackathonRules = createAsyncThunk(
       dispatch(upsertHackathon(response));
       return response;
     } catch (e: unknown) {
-      const error = e as AxiosError<ApiError>;
-      dispatch(setError(getErrorMessage(error)));
+      dispatch(setError(getErrorMessage(e)));
       return null;
     } finally {
       dispatch(stopLoading());
@@ -122,8 +115,7 @@ export const fetchFormFields = createAsyncThunk(
       dispatch(setFormFields(response));
       return response;
     } catch (e: unknown) {
-      const error = e as AxiosError<ApiError>;
-      dispatch(setError(getErrorMessage(error)));
+      dispatch(setError(getErrorMessage(e)));
       return [];
     }
   },
@@ -138,8 +130,7 @@ export const createFormField = createAsyncThunk(
       dispatch(upsertFormField(response));
       return response;
     } catch (e: unknown) {
-      const error = e as AxiosError<ApiError>;
-      dispatch(setError(getErrorMessage(error)));
+      dispatch(setError(getErrorMessage(e)));
       return null;
     } finally {
       dispatch(stopLoading());
@@ -156,8 +147,7 @@ export const updateFormField = createAsyncThunk(
       dispatch(upsertFormField(response));
       return response;
     } catch (e: unknown) {
-      const error = e as AxiosError<ApiError>;
-      dispatch(setError(getErrorMessage(error)));
+      dispatch(setError(getErrorMessage(e)));
       return null;
     } finally {
       dispatch(stopLoading());
@@ -174,8 +164,7 @@ export const deleteFormField = createAsyncThunk(
       dispatch(removeFormField(data.fieldId));
       return data.fieldId;
     } catch (e: unknown) {
-      const error = e as AxiosError<ApiError>;
-      dispatch(setError(getErrorMessage(error)));
+      dispatch(setError(getErrorMessage(e)));
       return null;
     } finally {
       dispatch(stopLoading());

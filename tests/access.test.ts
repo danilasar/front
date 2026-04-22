@@ -47,6 +47,12 @@ import {
   prepareTeamFieldValues,
   validateRequiredTeamFields,
 } from "../frontend/src/domain/teamFieldValues.ts";
+import {
+  getApiError,
+  getApiValidationMessages,
+  getErrorMessage,
+  isApiError,
+} from "../frontend/src/utils/errorTemplateMessage.ts";
 import type { FormField, Hackathon, UserProfile } from "../frontend/src/domain/types.ts";
 
 const hackathon = (organizerIds: string[]): Pick<Hackathon, "organizerIds"> => ({
@@ -449,6 +455,7 @@ test("форма invite onboarding использует предзаполнен
   assert.equal(values.fullName, "Bob Newbie");
   assert.equal(values.education, "Университет");
   assert.equal(validateInviteRegistrationForm(values).valid, true);
+  assert.equal(validateInviteRegistrationForm({ ...values, password: "short" }).errors[0], "Пароль должен быть не короче 8 символов");
   assert.deepEqual(toInviteRegistrationRequest(values), {
     fullName: "Bob Newbie",
     email: "bob@example.test",
@@ -458,4 +465,25 @@ test("форма invite onboarding использует предзаполнен
       course: "2",
     },
   });
+});
+
+test("typed API error helpers читают ErrorResponse и ValidationErrorResponse", () => {
+  const apiError = {
+    code: "validation_error",
+    message: "Ошибка валидации",
+    fields: [{ field: "email", message: "Некорректная почта" }],
+  };
+  const axiosError = {
+    isAxiosError: true,
+    response: {
+      status: 422,
+      data: apiError,
+    },
+  };
+
+  assert.equal(isApiError(apiError), true);
+  assert.deepEqual(getApiError(axiosError), apiError);
+  assert.deepEqual(getApiValidationMessages(axiosError), ["email: Некорректная почта"]);
+  assert.equal(getErrorMessage(axiosError), "Ошибка валидации: email: Некорректная почта");
+  assert.equal(getErrorMessage({ isAxiosError: true, response: { status: 403, data: {} } }), "Недостаточно прав");
 });

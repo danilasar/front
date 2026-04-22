@@ -156,18 +156,20 @@ Invite onboarding: приглашенный участник может откр
 
 Redux/API: подключены слайсы `auth`, `settings`, `hackathons`, `teams`, `admin`. API-адаптеры лежат в `frontend/src/api/hackathonApi.ts`.
 
-Доменные helpers: `frontend/src/domain/access.ts`, `adminForms.ts`, `teamForms.ts`, `teamModeration.ts`, `hackathonManagement.ts`, `rulesUpload.ts`, `teamFieldForms.ts`, `teamFieldValues.ts`, `inviteForms.ts` покрывают правила доступа, валидацию, преобразование form values в payload, отображение модерационных данных, фильтрацию хакатонов, проверку PDF-регламента, конструктор полей команды, значения этих полей в заявке и invite onboarding.
+Доменные helpers: `frontend/src/domain/access.ts`, `adminForms.ts`, `teamForms.ts`, `teamModeration.ts`, `hackathonManagement.ts`, `rulesUpload.ts`, `teamFieldForms.ts`, `teamFieldValues.ts`, `inviteForms.ts` покрывают правила доступа, валидацию, преобразование form values в payload, отображение модерационных данных, фильтрацию хакатонов, проверку PDF-регламента, конструктор полей команды, значения этих полей в заявке и invite onboarding. API error helpers типизируют `ErrorResponse` и `ValidationErrorResponse`.
 
-Тесты: `tests/access.test.ts` покрывает правила доступа, формы админки и формы командной заявки; `tests/apiAdapters.test.ts` покрывает базовые контракты API-адаптеров. Перед документированием проходили `npm run lint`, `npm test`, `npm run build`.
+Тесты: `tests/access.test.ts` покрывает правила доступа, формы админки, формы командной заявки и helpers ошибок API; `tests/apiAdapters.test.ts` покрывает базовые контракты API-адаптеров. Перед документированием проходили `npm run lint`, `npm test`, `npm run build`.
 
 8.2. Не готово
 
-Typed helpers для ошибок API и компонентные тесты ключевых форм.
+Компонентные тесты ключевых форм.
 
 8.3. Рекомендуемый следующий блок
 
-Следующим лучше брать стабилизацию контрактов:
+Следующим лучше брать компонентные тесты ключевых форм:
 
-1. синхронизировать DTO с `openapi.yaml` и добавить typed helpers для ошибок;
+1. покрыть форму командной заявки;
 
-2. после этого добавить компонентные тесты для ключевых форм.
+2. покрыть формы создания хакатона и организатора;
+
+3. покрыть конструктор полей команды.

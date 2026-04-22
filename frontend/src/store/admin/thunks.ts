@@ -1,7 +1,5 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import type { AxiosError } from "axios";
 import { adminApi } from "../../api/hackathonApi";
-import type { ApiError } from "../../api/type";
 import type { CreateOrganizerRequest } from "../../domain/types";
 import { getErrorMessage } from "../../utils/errorTemplateMessage";
 import { setError, startLoading, stopLoading } from "../settings";
@@ -14,8 +12,7 @@ export const fetchOrganizers = createAsyncThunk("admin/organizers", async (_, { 
     dispatch(setOrganizers(response.items));
     return response.items;
   } catch (e: unknown) {
-    const error = e as AxiosError<ApiError>;
-    dispatch(setError(getErrorMessage(error)));
+    dispatch(setError(getErrorMessage(e)));
     return [];
   } finally {
     dispatch(stopLoading());
@@ -31,8 +28,7 @@ export const createOrganizer = createAsyncThunk(
       dispatch(upsertOrganizer(response));
       return response;
     } catch (e: unknown) {
-      const error = e as AxiosError<ApiError>;
-      dispatch(setError(getErrorMessage(error)));
+      dispatch(setError(getErrorMessage(e)));
       return null;
     } finally {
       dispatch(stopLoading());
@@ -48,8 +44,7 @@ export const assignOrganizer = createAsyncThunk(
       await adminApi.assignOrganizer(data.hackathonId, data.organizerId);
       return data;
     } catch (e: unknown) {
-      const error = e as AxiosError<ApiError>;
-      dispatch(setError(getErrorMessage(error)));
+      dispatch(setError(getErrorMessage(e)));
       return null;
     } finally {
       dispatch(stopLoading());

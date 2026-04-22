@@ -1,7 +1,5 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import type { AxiosError } from "axios";
 import { teamApi } from "../../api/hackathonApi";
-import type { ApiError } from "../../api/type";
 import type { CreateTeamApplicationRequest, ExportFormat, TeamStatus } from "../../domain/types";
 import { getErrorMessage } from "../../utils/errorTemplateMessage";
 import { setError, startLoading, stopLoading } from "../settings";
@@ -16,8 +14,7 @@ export const fetchTeams = createAsyncThunk(
       dispatch(setTeams(response.items));
       return response.items;
     } catch (e: unknown) {
-      const error = e as AxiosError<ApiError>;
-      dispatch(setError(getErrorMessage(error)));
+      dispatch(setError(getErrorMessage(e)));
       return [];
     } finally {
       dispatch(stopLoading());
@@ -35,8 +32,7 @@ export const createTeamApplication = createAsyncThunk(
       dispatch(setInvitationLinks(response.invitationLinks));
       return response;
     } catch (e: unknown) {
-      const error = e as AxiosError<ApiError>;
-      dispatch(setError(getErrorMessage(error)));
+      dispatch(setError(getErrorMessage(e)));
       return null;
     } finally {
       dispatch(stopLoading());
@@ -53,8 +49,7 @@ export const updateTeamStatus = createAsyncThunk(
       dispatch(upsertTeam(response));
       return response;
     } catch (e: unknown) {
-      const error = e as AxiosError<ApiError>;
-      dispatch(setError(getErrorMessage(error)));
+      dispatch(setError(getErrorMessage(e)));
       return null;
     } finally {
       dispatch(stopLoading());
@@ -71,8 +66,7 @@ export const disqualifyTeamMember = createAsyncThunk(
       dispatch(upsertTeam(response));
       return response;
     } catch (e: unknown) {
-      const error = e as AxiosError<ApiError>;
-      dispatch(setError(getErrorMessage(error)));
+      dispatch(setError(getErrorMessage(e)));
       return null;
     } finally {
       dispatch(stopLoading());
@@ -87,8 +81,7 @@ export const exportTeamsFile = createAsyncThunk(
       dispatch(startLoading());
       return await teamApi.exportTeams(data.hackathonId, data.format);
     } catch (e: unknown) {
-      const error = e as AxiosError<ApiError>;
-      dispatch(setError(getErrorMessage(error)));
+      dispatch(setError(getErrorMessage(e)));
       return null;
     } finally {
       dispatch(stopLoading());

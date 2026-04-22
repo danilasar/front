@@ -149,6 +149,7 @@ export type TeamMember = {
   email: string | null;
   captain: boolean;
   status: "active" | "pending_invitation" | "disqualified";
+  invitation?: Invitation | null;
   profileFields: DynamicFieldValues;
 };
 
@@ -193,7 +194,7 @@ export type TeamApplicationResponse = {
   }>;
 };
 
-export type InvitationStatus = "pending" | "accepted" | "expired";
+export type InvitationStatus = "pending" | "accepted" | "expired" | "revoked";
 
 export type Invitation = {
   token: string;

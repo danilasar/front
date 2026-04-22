@@ -1619,7 +1619,7 @@ components:
 
     FormFieldScope:
       type: string
-      enum: [profile, registration, feedback]
+      enum: [profile, team, feedback]
 
     FormFieldType:
       type: string
@@ -1816,7 +1816,7 @@ components:
 
     Team:
       type: object
-      required: [id, hackathonId, name, status, members, createdAt, updatedAt]
+      required: [id, hackathonId, name, status, members, fields, createdAt, updatedAt]
       properties:
         id:
           type: string
@@ -1832,6 +1832,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/TeamMember"
+        fields:
+          $ref: "#/components/schemas/DynamicFieldValues"
         submittedAt:
           type: string
           format: date-time
@@ -1915,6 +1917,8 @@ components:
           maxItems: 20
           items:
             $ref: "#/components/schemas/TeamMemberInput"
+        fields:
+          $ref: "#/components/schemas/DynamicFieldValues"
 
     TeamApplicationResponse:
       type: object
@@ -1947,6 +1951,8 @@ components:
           maxItems: 20
           items:
             $ref: "#/components/schemas/TeamMemberInput"
+        fields:
+          $ref: "#/components/schemas/DynamicFieldValues"
 
     UpdateTeamStatusRequest:
       type: object

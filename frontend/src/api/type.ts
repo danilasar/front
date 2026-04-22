@@ -10,6 +10,13 @@ export type AppStore = Store<RootState> & {
   dispatch: AppDispatch;
 };
 
+export type ApiErrorField = {
+  field: string;
+  message: string;
+};
+
 export type ApiError = {
-  message?: string;
-}
+  code: string;
+  message: string;
+  fields?: ApiErrorField[];
+};

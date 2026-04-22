@@ -1,7 +1,5 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import type { AxiosError } from "axios";
 import { authApi, invitationApi } from "../../api/hackathonApi";
-import type { ApiError } from "../../api/type";
 import type { CompleteInvitationRegistrationRequest } from "../../domain/types";
 import { getErrorMessage } from "../../utils/errorTemplateMessage";
 import { setError, startLoading, stopLoading } from "../settings";
@@ -27,9 +25,8 @@ export const login = createAsyncThunk(
       dispatch(authSuccess(response.user));
       return response.user;
     } catch (e: unknown) {
-      const error = e as AxiosError<ApiError>;
       dispatch(authFailed());
-      dispatch(setError(getErrorMessage(error)));
+      dispatch(setError(getErrorMessage(e)));
       return null;
     } finally {
       dispatch(stopLoading());
@@ -47,9 +44,8 @@ export const register = createAsyncThunk(
       dispatch(authSuccess(response.user));
       return response.user;
     } catch (e: unknown) {
-      const error = e as AxiosError<ApiError>;
       dispatch(authFailed());
-      dispatch(setError(getErrorMessage(error)));
+      dispatch(setError(getErrorMessage(e)));
       return null;
     } finally {
       dispatch(stopLoading());
@@ -67,9 +63,8 @@ export const completeInviteRegistration = createAsyncThunk(
       dispatch(authSuccess(response.user));
       return response.user;
     } catch (e: unknown) {
-      const error = e as AxiosError<ApiError>;
       dispatch(authFailed());
-      dispatch(setError(getErrorMessage(error)));
+      dispatch(setError(getErrorMessage(e)));
       return null;
     } finally {
       dispatch(stopLoading());

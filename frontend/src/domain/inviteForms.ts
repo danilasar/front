@@ -25,7 +25,7 @@ export const validateInviteRegistrationForm = (values: InviteRegistrationFormVal
   const errors: string[] = [];
   if (values.fullName.trim().length < 2) errors.push("Укажите ФИО");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) errors.push("Укажите корректную почту");
-  if (values.password.length < 6) errors.push("Пароль должен быть не короче 6 символов");
+  if (values.password.length < 8) errors.push("Пароль должен быть не короче 8 символов");
   if (values.education.trim().length < 2) errors.push("Укажите учебное заведение");
   if (values.course.trim().length === 0) errors.push("Укажите курс");
   return { valid: errors.length === 0, errors };

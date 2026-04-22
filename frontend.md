@@ -292,9 +292,10 @@ Response interceptor:
 API-адаптеры находятся в `src/api/hackathonApi.ts`:
 
 - `authApi`: login/register/refresh/me;
-- `adminApi`: список организаторов, создание организатора, назначение организатора;
-- `hackathonApi`: список, активный хакатон, получение, создание, обновление, поля формы;
-- `teamApi`: список команд, создание заявки, изменение статуса команды, дисквалификация участника.
+- `adminApi`: организаторы и назначение организаторов на хакатон;
+- `hackathonApi`: список, активный хакатон, получение, создание, обновление, PDF-регламент, поля формы;
+- `teamApi`: список команд, создание заявки, изменение статуса команды, дисквалификация участника, backend export;
+- `invitationApi`: получение и принятие приглашений.
 
 ## Доменные модули
 
@@ -302,7 +303,8 @@ API-адаптеры находятся в `src/api/hackathonApi.ts`:
 
 - роли пользователей;
 - DTO пользователя, хакатона, полей формы, команды и заявки;
-- типы payload/response для основных API.
+- типы payload/response для основных API;
+- DTO сверены с `openapi.yaml` по team fields, team application fields и invitation statuses.
 
 `src/domain/access.ts`
 
@@ -520,6 +522,7 @@ API-адаптеры находятся в `src/api/hackathonApi.ts`:
 - helpers конструктора полей команды: key, label, options, payload.
 - helpers значений полей команды: trim, required validation, payload fields.
 - helpers invite onboarding: предзаполнение формы, валидация, payload завершения регистрации.
+- typed helpers ошибок API: `ErrorResponse`, `ValidationErrorResponse`, fallback по HTTP status.
 - API adapter tests для auth, admin, hackathons, teams, invitations и exports.
 
 Проверки перед последним документированием:
@@ -555,18 +558,20 @@ npm run build
 - скачивание CSV/XLSX через backend export endpoint;
 - удален legacy quote/user код из исходного шаблона;
 - доменные тесты формы доступа, админки, команд и invite onboarding;
-- API adapter tests для `hackathonApi`.
+- API adapter tests для `hackathonApi`;
+- typed helpers для ошибок API;
+- синхронизированы DTO и `openapi.yaml` по полям команды.
 
 Не готово:
 
-- компонентные тесты ключевых форм;
-- сверка DTO с `openapi.yaml` и typed helpers для ошибок.
+- компонентные тесты ключевых форм.
 
 ## Следующий План
 
-Наиболее логичный следующий блок - завершение стабилизации API-слоя:
+Наиболее логичный следующий блок - компонентные тесты ключевых форм:
 
-1. Сверить DTO с `openapi.yaml` и добавить typed helpers для ошибок API.
-2. После стабилизации контрактов добавить компонентные тесты ключевых форм.
+1. Покрыть форму командной заявки.
+2. Покрыть форму создания хакатона и организатора.
+3. Покрыть конструктор полей команды.
 
-Практически лучше продолжить с typed error helpers: адаптеры уже покрыты базовыми контрактными тестами, теперь нужно унифицировать обработку ошибок.
+Практически лучше начать с формы командной заявки: у нее самый широкий пользовательский сценарий и больше всего условий валидации.
