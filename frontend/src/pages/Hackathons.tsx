@@ -22,13 +22,13 @@ export default function Hackathons() {
       <div className="w-full max-w-5xl px-2 space-y-6">
         <Card>
           <CardContent className="flex justify-between items-center gap-4 flex-wrap">
-            <div>
+            <div className="mt-4">
               <CardTitle className="text-3xl mb-2">Хакатоны</CardTitle>
               <CardDescription>Активные события, архив и черновики мероприятий</CardDescription>
             </div>
             {canCreateHackathon(user?.role) && (
               <Button asChild>
-                <Link to="/admin">
+                <Link to="/hackathons/new">
                   Создать
                 </Link>
               </Button>

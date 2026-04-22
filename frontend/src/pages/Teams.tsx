@@ -476,8 +476,8 @@ export default function Teams() {
                     <th className="px-4 py-3 font-semibold">Капитан</th>
                     <th className="px-4 py-3 font-semibold">Состав</th>
                     <th className="px-4 py-3 font-semibold">Подача</th>
-                    <th className="px-4 py-3 font-semibold">Причина</th>
-                    <th className="px-4 py-3 text-right font-semibold">Действия</th>
+                    {managementAccess.allowed && <th className="px-4 py-3 font-semibold">Причина</th>}
+                    {managementAccess.allowed && <th className="px-4 py-3 text-right font-semibold">Действия</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -528,15 +528,15 @@ export default function Teams() {
                           </div>
                         </td>
                         <td className="px-4 py-4">{formatTeamDate(team.submittedAt)}</td>
-                        <td className="min-w-56 px-4 py-4">
+                        {managementAccess.allowed && <td className="min-w-56 px-4 py-4">
                           <InputTextField
                             label="Причина"
                             value={reason}
                             disabled={!managementAccess.allowed}
                             onChange={(event) => updateModerationReason(team.id, event.target.value)}
                           />
-                        </td>
-                        <td className="px-4 py-4">
+                        </td>}
+                        {managementAccess.allowed && <td className="px-4 py-4">
                           <div className="flex flex-wrap justify-end gap-2">
                             <Button
                               size="sm"
@@ -566,7 +566,7 @@ export default function Teams() {
                               Дискв.
                             </Button>
                           </div>
-                        </td>
+                        </td>}
                       </tr>
                     );
                   })}

@@ -154,6 +154,13 @@ Mock backend запускается из корня репозитория:
 node mock-backend/server.mjs
 ```
 
+Запуск всего проекта из корня репозитория (см. `justfile`):
+
+```bash
+just dev        # mock-backend + frontend
+just dev-real   # backend (Rust) + frontend
+```
+
 По умолчанию mock backend слушает:
 
 ```text
@@ -296,6 +303,23 @@ API-адаптеры находятся в `src/api/hackathonApi.ts`:
 - `hackathonApi`: список, активный хакатон, получение, создание, обновление, PDF-регламент, поля формы;
 - `teamApi`: список команд, создание заявки, изменение статуса команды, дисквалификация участника, backend export;
 - `invitationApi`: получение и принятие приглашений.
+
+## Интеграция с реальным backend
+
+Целевой контракт описан в `openapi.yaml`, но фактическая реализация backend ориентирована на потребности текущего фронта (см. `backend.md`).
+
+Для удобного наполнения dev-БД на backend есть ручка без авторизации:
+
+- `POST /api/v1/test/seed` - создаёт пользователей:
+  - `admin@test.ru` (admin)
+  - `organizer@test.ru` (organizer)
+  - `teamlead@test.ru` (participant)
+  - `parcipicant@test.ru` (participant)
+  - `just-user@test.ru` (participant)
+  - пароль у всех: `password`
+  - создаёт активный хакатон и команду из 2 участников (teamlead+parcipicant)
+
+Эта ручка не является частью `openapi.yaml` и предназначена только для локальной разработки.
 
 ## Доменные модули
 
@@ -498,10 +522,10 @@ API-адаптеры находятся в `src/api/hackathonApi.ts`:
 
 ## Тесты
 
-Тесты лежат в:
+Тесты лежат в корне репозитория (см. `package.json -> test`):
 
-- `tests/access.test.ts`;
-- `tests/apiAdapters.test.ts`.
+- `tests/access.test.ts`
+- `tests/apiAdapters.test.ts`
 
 Сейчас покрыто:
 
@@ -575,3 +599,42 @@ npm run build
 3. Покрыть конструктор полей команды.
 
 Практически лучше начать с формы командной заявки: у нее самый широкий пользовательский сценарий и больше всего условий валидации.
+
+## Покрытие фронтом реализованного backend
+
+Фронт использует следующие группы ручек (см. `frontend/src/api/hackathonApi.ts`):
+
+- Auth: `POST /auth/login`, `POST /auth/register`, `POST /auth/refresh`, `GET /users/me`.
+- Admin: `GET /admin/organizers`, `POST /admin/organizers`, `PUT /admin/hackathons/:hackathonId/organizers/:organizerId`.
+- Hackathons: `GET /hackathons`, `GET /hackathons/active`, `GET /hackathons/:id`, `POST /hackathons`, `PATCH /hackathons/:id`, `POST /hackathons/:id/activate`, `PUT /hackathons/:id/rules`.
+- Form fields: `GET/POST/PATCH/DELETE /hackathons/:id/form-fields`.
+- Teams: `GET/POST /hackathons/:id/teams`, `PATCH /hackathons/:id/teams/:teamId/status`, `POST /hackathons/:id/teams/:teamId/members/:memberId/disqualify`, `GET /hackathons/:id/exports/teams`.
+- Invitations: `GET /invitations/:token`, `POST /invitations/:token/accept-existing`, `POST /invitations/:token/complete-registration`.
+
+Из реализованного backend фронтом пока не используется:
+
+- `PATCH /admin/organizers/:id` (UI редактирования организатора нет).
+- `GET /admin/hackathons/:id/organizers` и `PUT /admin/hackathons/:id/organizers` (фронт назначает организаторов точечно через `PUT .../organizers/:organizerId`).
+- `DELETE /hackathons/:id`, `GET /hackathons/:id/exports/teams` (xlsx) и часть team member операций (`DELETE member`, `DELETE team`) не выведены как явные кнопки в UI.
+
+В `openapi.yaml` есть, но в UI/или backend пока не доведено до прод-уровня:
+
+- feedback/files/registrations (на фронте нет страниц, на backend заглушки/нет).
+- role enforcement: фронт предполагает разграничение, но backend сейчас не везде защищает ручки middleware-ами.
+
+## Соответствие требованиям (чек)
+
+Раздел "Требования к фронтенду" в начале документа сохранён. По факту текущего кода:
+
+- TypeScript: весь `frontend/src` в `.ts/.tsx`.
+- Запрет на `any/never`: по `frontend/src` совпадений нет.
+- Архитектура папок: `src/components`, `src/ui`, `src/utils` присутствуют.
+- Redux Toolkit: есть store + слайсы `auth/settings/hackathons/teams/admin` (>= 3 кастомных).
+- Взаимодействие между slice: thunks диспатчат actions других слайсов (например, глобальная загрузка/ошибки из settings используются в страницах и auth flow).
+- Axios: используются `GET/POST/PUT/DELETE/PATCH` в `src/api/hackathonApi.ts`.
+- Индикатор загрузки: через `settings.isLoading` в `CommonWrapper`.
+- Обработка ошибок: через `ErrorModal` и `settings.error`.
+- Оптимизация стартовых запросов: `AuthWrapper` делает восстановление 1 раз по флагу инициализации.
+- Роутинг: `react-router-dom`, страницы: `/` (landing), `/login`, `/register`, `/profile`, `/admin`, `/hackathons`, `/hackathons/:id`, `/hackathons/:id/teams`, `/invite/:token`, `*` (404).
+- UI/UX: действия оформлены кнопками с текстом и/или иконками (lucide) в критичных местах.
+- Сборка: `npm run build` проходит.

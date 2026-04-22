@@ -3,7 +3,7 @@ import { CustomForm } from "../ui/CustomForm";
 import { InputTextField } from "../ui/InputTextField";
 import { GridBackGroundLayout } from "../ui/GridBackGroundLayout";
 import { Link } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 
 type AuthTemplatePageProps<T extends FieldValues> = {
   title: string;
@@ -42,7 +42,6 @@ export default function AuthTemplatePage<T extends FieldValues>({
       <Card className="mx-auto w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl">{title}</CardTitle>
-          <CardDescription>Единый аккаунт для участия и управления хакатонами</CardDescription>
         </CardHeader>
         <CardContent>
           <CustomForm onSubmit={handleSubmit(onSubmit)} buttonText={submitButtonText}>

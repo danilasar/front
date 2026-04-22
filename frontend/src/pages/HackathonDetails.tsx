@@ -142,7 +142,7 @@ export default function HackathonDetails() {
               <CardHeader>
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <CardTitle>PDF-регламент</CardTitle>
+                    <CardTitle>Регламент</CardTitle>
                     <CardDescription>
                       {hackathon.rulesFile
                         ? `${hackathon.rulesFile.originalName} · ${Math.ceil(hackathon.rulesFile.sizeBytes / 1024)} КБ`

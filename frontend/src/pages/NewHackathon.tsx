@@ -13,16 +13,13 @@ import {
 } from "../components/ui/select";
 import { GridBackGroundLayout } from "../ui/GridBackGroundLayout";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { assignOrganizer, createOrganizer, fetchOrganizers } from "../store/admin";
+import { assignOrganizer, fetchOrganizers } from "../store/admin";
 import { activateHackathon, createHackathon, fetchHackathons } from "../store/hackathons";
 import { InputTextField } from "../ui/InputTextField";
 import {
   toHackathonRequest,
-  toOrganizerRequest,
   validateHackathonForm,
-  validateOrganizerForm,
   type HackathonFormValues,
-  type OrganizerFormValues,
 } from "../domain/adminForms";
 import {
   filterHackathons,
@@ -31,13 +28,6 @@ import {
   hackathonStatusOptions,
   type HackathonStatusFilter,
 } from "../domain/hackathonManagement";
-
-const initialOrganizerForm: OrganizerFormValues = {
-  fullName: "",
-  email: "",
-  password: "password",
-  phone: "",
-};
 
 const today = new Date().toISOString().slice(0, 10);
 const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
@@ -54,11 +44,10 @@ const initialHackathonForm: HackathonFormValues = {
 
 const NO_ORGANIZER_VALUE = "__no_organizer__";
 
-export default function AdminPanel() {
+export default function NewHackathon() {
   const dispatch = useAppDispatch();
   const organizers = useAppSelector((state) => state.admin.organizers);
   const hackathons = useAppSelector((state) => state.hackathons.items);
-  const [organizerForm, setOrganizerForm] = useState(initialOrganizerForm);
   const [hackathonForm, setHackathonForm] = useState(initialHackathonForm);
   const [assignment, setAssignment] = useState({ hackathonId: "", organizerId: "" });
   const [hackathonStatusFilter, setHackathonStatusFilter] = useState<HackathonStatusFilter>("all");
@@ -78,21 +67,6 @@ export default function AdminPanel() {
     () => filterHackathons(hackathons, hackathonStatusFilter),
     [hackathons, hackathonStatusFilter],
   );
-
-  const handleCreateOrganizer = async (event: React.FormEvent) => {
-    event.preventDefault();
-    const validation = validateOrganizerForm(organizerForm);
-    if (!validation.valid) {
-      setErrors(validation.errors);
-      return;
-    }
-
-    const created = await dispatch(createOrganizer(toOrganizerRequest(organizerForm))).unwrap();
-    if (created) {
-      setOrganizerForm(initialOrganizerForm);
-      setErrors([]);
-    }
-  };
 
   const handleCreateHackathon = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -142,7 +116,7 @@ export default function AdminPanel() {
             <div className="space-y-4">
               <div>
                 <CardTitle className="text-3xl mb-2">Администрирование</CardTitle>
-                <CardDescription>Глобальные сущности: хакатоны, организаторы и назначения</CardDescription>
+                <CardDescription>Управление хакатонами</CardDescription>
               </div>
               {errors.length > 0 && (
                 <Alert variant="destructive">
@@ -155,39 +129,7 @@ export default function AdminPanel() {
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Новый организатор</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleCreateOrganizer} className="space-y-4">
-                <InputTextField
-                  label="ФИО"
-                  value={organizerForm.fullName}
-                  onChange={(event) => setOrganizerForm((prev) => ({ ...prev, fullName: event.target.value }))}
-                />
-                <InputTextField
-                  label="Почта"
-                  type="email"
-                  value={organizerForm.email}
-                  onChange={(event) => setOrganizerForm((prev) => ({ ...prev, email: event.target.value }))}
-                />
-                <InputTextField
-                  label="Пароль"
-                  type="password"
-                  value={organizerForm.password}
-                  onChange={(event) => setOrganizerForm((prev) => ({ ...prev, password: event.target.value }))}
-                />
-                <InputTextField
-                  label="Телефон"
-                  value={organizerForm.phone}
-                  onChange={(event) => setOrganizerForm((prev) => ({ ...prev, phone: event.target.value }))}
-                />
-                <Button type="submit" className="w-full">Создать организатора</Button>
-              </form>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
 
           <Card>
             <CardHeader>
@@ -301,19 +243,7 @@ export default function AdminPanel() {
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <h3 className="text-xl font-bold">Организаторы</h3>
-            {organizers.map((organizer) => (
-              <Card key={organizer.id}>
-                <CardContent className="pt-6">
-                  <h4 className="font-semibold">{organizer.fullName}</h4>
-                  <p className="text-sm text-muted-foreground">{organizer.email}</p>
-                  <p className="text-sm">Роль: {organizer.role}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
 
           <div className="space-y-4">
             <div className="flex justify-between items-start gap-4 flex-wrap">

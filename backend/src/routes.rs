@@ -1,4 +1,5 @@
-use axum::{Router, middleware::from_fn, response::IntoResponse, routing::get};
+use axum::{Json, Router, middleware::from_fn, response::IntoResponse, routing::get};
+use serde::Serialize;
 use utoipa::{
     OpenApi,
     openapi::security::{HttpAuthScheme, HttpBuilder, SecurityScheme},
@@ -87,6 +88,7 @@ pub fn get_all_routes(state: AppState) -> Router<AppState> {
         });
 
     let api_router = Router::new()
+        .route("/health", get(health))
         .nest("/aboba", protect_aboba_router)
         .nest("/auth", auth_router)
         .nest("/users", user_router)
@@ -98,6 +100,15 @@ pub fn get_all_routes(state: AppState) -> Router<AppState> {
         .merge(misc_router);
 
     Router::new().nest("/api/v1", api_router)
+}
+
+#[derive(Serialize)]
+struct HealthResponse {
+    status: &'static str,
+}
+
+async fn health() -> impl IntoResponse {
+    Json(HealthResponse { status: "ok" })
 }
 
 #[derive(OpenApi)]
