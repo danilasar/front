@@ -34,6 +34,11 @@ import {
   hackathonStatusLabels,
 } from "../frontend/src/domain/hackathonManagement.ts";
 import { validateRulesPdf } from "../frontend/src/domain/rulesUpload.ts";
+import {
+  parseFieldOptions,
+  toTeamFieldRequest,
+  validateTeamFieldForm,
+} from "../frontend/src/domain/teamFieldForms.ts";
 import type { Hackathon, Team, UserProfile } from "../frontend/src/domain/types.ts";
 
 const hackathon = (organizerIds: string[]): Pick<Hackathon, "organizerIds"> => ({
@@ -387,4 +392,52 @@ test("валидация PDF-регламента принимает тольк�
   assert.equal(validateRulesPdf(pdf).valid, true);
   assert.equal(validateRulesPdf(text).error, "Регламент должен быть PDF-файлом");
   assert.equal(validateRulesPdf(large).error, "PDF-регламент должен быть меньше 10 МБ");
+});
+
+test("форма поля команды валидирует ключ и варианты", () => {
+  const invalid = validateTeamFieldForm({
+    key: "1bad",
+    label: "",
+    description: "",
+    type: "select",
+    required: false,
+    visible: true,
+    optionsText: "",
+  });
+
+  assert.equal(invalid.valid, false);
+  assert.equal(invalid.errors.length, 3);
+});
+
+test("форма поля команды готовит payload", () => {
+  assert.deepEqual(parseFieldOptions("backend: Backend\nfrontend"), [
+    { value: "backend", label: "Backend" },
+    { value: "frontend", label: "frontend" },
+  ]);
+
+  const payload = toTeamFieldRequest({
+    key: "track",
+    label: " Трек ",
+    description: " Направление ",
+    type: "select",
+    required: true,
+    visible: true,
+    optionsText: "backend: Backend\nfrontend: Frontend",
+  }, 2);
+
+  assert.deepEqual(payload, {
+    scope: "team",
+    key: "track",
+    label: "Трек",
+    description: "Направление",
+    type: "select",
+    required: true,
+    visible: true,
+    order: 2,
+    options: [
+      { value: "backend", label: "Backend" },
+      { value: "frontend", label: "Frontend" },
+    ],
+    validation: {},
+  });
 });

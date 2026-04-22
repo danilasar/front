@@ -35,14 +35,28 @@ const hackathonsSlice = createSlice({
     setFormFields: (state, action: PayloadAction<FormField[]>) => {
       state.fields = action.payload;
     },
+    upsertFormField: (state, action: PayloadAction<FormField>) => {
+      const index = state.fields.findIndex((item) => item.id === action.payload.id);
+      if (index === -1) {
+        state.fields.push(action.payload);
+        state.fields.sort((a, b) => a.order - b.order);
+      } else {
+        state.fields[index] = action.payload;
+      }
+    },
+    removeFormField: (state, action: PayloadAction<string>) => {
+      state.fields = state.fields.filter((field) => field.id !== action.payload);
+    },
   },
 });
 
 export const {
+  removeFormField,
   setActiveHackathon,
   setCurrentHackathon,
   setFormFields,
   setHackathons,
   upsertHackathon,
+  upsertFormField,
 } = hackathonsSlice.actions;
 export default hackathonsSlice.reducer;

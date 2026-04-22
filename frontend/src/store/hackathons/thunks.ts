@@ -2,7 +2,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import type { AxiosError } from "axios";
 import { hackathonApi } from "../../api/hackathonApi";
 import type { ApiError } from "../../api/type";
-import type { CreateHackathonRequest } from "../../domain/types";
+import type { CreateHackathonRequest, FormField, FormFieldScope } from "../../domain/types";
 import { getErrorMessage } from "../../utils/errorTemplateMessage";
 import { setError, startLoading, stopLoading } from "../settings";
 import {
@@ -11,6 +11,8 @@ import {
   setFormFields,
   setHackathons,
   upsertHackathon,
+  upsertFormField,
+  removeFormField,
 } from "./slice";
 
 export const fetchHackathons = createAsyncThunk("hackathons/list", async (_, { dispatch }) => {
@@ -114,7 +116,7 @@ export const uploadHackathonRules = createAsyncThunk(
 
 export const fetchFormFields = createAsyncThunk(
   "hackathons/fields",
-  async (data: { hackathonId: string; scope?: string }, { dispatch }) => {
+  async (data: { hackathonId: string; scope?: FormFieldScope }, { dispatch }) => {
     try {
       const response = await hackathonApi.fields(data.hackathonId, data.scope);
       dispatch(setFormFields(response));
@@ -123,6 +125,60 @@ export const fetchFormFields = createAsyncThunk(
       const error = e as AxiosError<ApiError>;
       dispatch(setError(getErrorMessage(error)));
       return [];
+    }
+  },
+);
+
+export const createFormField = createAsyncThunk(
+  "hackathons/createField",
+  async (data: { hackathonId: string; field: Omit<FormField, "id" | "hackathonId"> }, { dispatch }) => {
+    try {
+      dispatch(startLoading());
+      const response = await hackathonApi.createField(data.hackathonId, data.field);
+      dispatch(upsertFormField(response));
+      return response;
+    } catch (e: unknown) {
+      const error = e as AxiosError<ApiError>;
+      dispatch(setError(getErrorMessage(error)));
+      return null;
+    } finally {
+      dispatch(stopLoading());
+    }
+  },
+);
+
+export const updateFormField = createAsyncThunk(
+  "hackathons/updateField",
+  async (data: { hackathonId: string; fieldId: string; patch: Partial<Omit<FormField, "id" | "hackathonId">> }, { dispatch }) => {
+    try {
+      dispatch(startLoading());
+      const response = await hackathonApi.updateField(data.hackathonId, data.fieldId, data.patch);
+      dispatch(upsertFormField(response));
+      return response;
+    } catch (e: unknown) {
+      const error = e as AxiosError<ApiError>;
+      dispatch(setError(getErrorMessage(error)));
+      return null;
+    } finally {
+      dispatch(stopLoading());
+    }
+  },
+);
+
+export const deleteFormField = createAsyncThunk(
+  "hackathons/deleteField",
+  async (data: { hackathonId: string; fieldId: string }, { dispatch }) => {
+    try {
+      dispatch(startLoading());
+      await hackathonApi.deleteField(data.hackathonId, data.fieldId);
+      dispatch(removeFormField(data.fieldId));
+      return data.fieldId;
+    } catch (e: unknown) {
+      const error = e as AxiosError<ApiError>;
+      dispatch(setError(getErrorMessage(error)));
+      return null;
+    } finally {
+      dispatch(stopLoading());
     }
   },
 );

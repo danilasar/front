@@ -1,13 +1,46 @@
 import { useEffect, useState } from "react";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import PictureAsPdfOutlinedIcon from "@mui/icons-material/PictureAsPdfOutlined";
-import { Alert, Box, Button, Card, CardContent, Chip, Stack, Typography } from "@mui/material";
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Checkbox,
+  Chip,
+  FormControl,
+  FormControlLabel,
+  InputLabel,
+  MenuItem,
+  Select,
+  Stack,
+  Typography,
+} from "@mui/material";
 import { Link, useParams } from "react-router-dom";
 import { GridBackGroundLayout } from "../ui/GridBackGroundLayout";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { fetchFormFields, fetchHackathon, uploadHackathonRules } from "../store/hackathons";
+import {
+  createFormField,
+  deleteFormField,
+  fetchFormFields,
+  fetchHackathon,
+  updateFormField,
+  uploadHackathonRules,
+} from "../store/hackathons";
 import { explainHackathonManagementAccess } from "../domain/access";
 import { validateRulesPdf } from "../domain/rulesUpload";
+import { InputTextField } from "../ui/InputTextField";
+import {
+  fieldTypeNeedsOptions,
+  initialTeamFieldForm,
+  teamFieldTypeOptions,
+  toTeamFieldRequest,
+  validateTeamFieldForm,
+  type TeamFieldFormValues,
+} from "../domain/teamFieldForms";
 
 export default function HackathonDetails() {
   const { hackathonId } = useParams();
@@ -17,6 +50,8 @@ export default function HackathonDetails() {
   const user = useAppSelector((state) => state.auth.user);
   const [rulesFile, setRulesFile] = useState<File | null>(null);
   const [rulesError, setRulesError] = useState<string | null>(null);
+  const [fieldForm, setFieldForm] = useState<TeamFieldFormValues>(initialTeamFieldForm);
+  const [fieldErrors, setFieldErrors] = useState<string[]>([]);
 
   useEffect(() => {
     if (!hackathonId) return;
@@ -37,6 +72,41 @@ export default function HackathonDetails() {
     await dispatch(uploadHackathonRules({ hackathonId: hackathon.id, file: rulesFile as File }));
     setRulesFile(null);
     setRulesError(null);
+  };
+
+  const updateFieldForm = (patch: Partial<TeamFieldFormValues>) => {
+    setFieldForm((prev) => ({ ...prev, ...patch }));
+  };
+
+  const handleCreateField = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!hackathon) return;
+
+    const validation = validateTeamFieldForm(fieldForm);
+    if (!validation.valid) {
+      setFieldErrors(validation.errors);
+      return;
+    }
+
+    const created = await dispatch(createFormField({
+      hackathonId: hackathon.id,
+      field: toTeamFieldRequest(fieldForm, fields.length + 1),
+    })).unwrap();
+
+    if (created) {
+      setFieldForm(initialTeamFieldForm);
+      setFieldErrors([]);
+    }
+  };
+
+  const handleToggleField = async (fieldId: string, patch: { required?: boolean; visible?: boolean }) => {
+    if (!hackathon) return;
+    await dispatch(updateFormField({ hackathonId: hackathon.id, fieldId, patch }));
+  };
+
+  const handleDeleteField = async (fieldId: string) => {
+    if (!hackathon) return;
+    await dispatch(deleteFormField({ hackathonId: hackathon.id, fieldId }));
   };
 
   return (
@@ -123,6 +193,142 @@ export default function HackathonDetails() {
                       </Button>
                     </Stack>
                   )}
+                </Stack>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent>
+                <Stack spacing={2.5}>
+                  <Box>
+                    <Typography variant="h5">Поля команды</Typography>
+                    <Typography color="text.secondary">Динамические поля заявки команды на этот хакатон</Typography>
+                  </Box>
+
+                  {access.allowed && (
+                    <Stack component="form" spacing={2} onSubmit={handleCreateField}>
+                      {fieldErrors.length > 0 && (
+                        <Alert severity="error">{fieldErrors.join(". ")}</Alert>
+                      )}
+                      <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+                        <InputTextField
+                          label="Ключ"
+                          value={fieldForm.key}
+                          onChange={(event) => updateFieldForm({ key: event.target.value })}
+                        />
+                        <InputTextField
+                          label="Подпись"
+                          value={fieldForm.label}
+                          onChange={(event) => updateFieldForm({ label: event.target.value })}
+                        />
+                      </Stack>
+                      <InputTextField
+                        label="Описание"
+                        value={fieldForm.description}
+                        onChange={(event) => updateFieldForm({ description: event.target.value })}
+                      />
+                      <FormControl fullWidth>
+                        <InputLabel id="team-field-type-label">Тип поля</InputLabel>
+                        <Select
+                          labelId="team-field-type-label"
+                          label="Тип поля"
+                          value={fieldForm.type}
+                          onChange={(event) => updateFieldForm({ type: event.target.value as TeamFieldFormValues["type"] })}
+                        >
+                          {teamFieldTypeOptions.map((option) => (
+                            <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                      {fieldTypeNeedsOptions(fieldForm.type) && (
+                        <InputTextField
+                          label="Варианты"
+                          value={fieldForm.optionsText}
+                          onChange={(event) => updateFieldForm({ optionsText: event.target.value })}
+                          multiline
+                          minRows={3}
+                        />
+                      )}
+                      <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                        <FormControlLabel
+                          control={<Checkbox checked={fieldForm.required} onChange={(event) => updateFieldForm({ required: event.target.checked })} />}
+                          label="Обязательное"
+                        />
+                        <FormControlLabel
+                          control={<Checkbox checked={fieldForm.visible} onChange={(event) => updateFieldForm({ visible: event.target.checked })} />}
+                          label="Видимое"
+                        />
+                      </Stack>
+                      <Button type="submit" variant="contained" startIcon={<AddCircleOutlineIcon />}>
+                        Добавить поле
+                      </Button>
+                    </Stack>
+                  )}
+
+                  <Stack spacing={1.5}>
+                    {fields.map((field) => (
+                      <Box
+                        key={field.id}
+                        sx={(theme) => ({
+                          border: `1px solid ${theme.palette.divider}`,
+                          borderRadius: 2,
+                          p: 2,
+                          background: theme.palette.mode === "dark" ? "rgba(7, 27, 45, 0.42)" : "rgba(255, 255, 255, 0.42)",
+                        })}
+                      >
+                        <Stack spacing={1.5}>
+                          <Box display="flex" justifyContent="space-between" gap={1} flexWrap="wrap">
+                            <Box>
+                              <Typography fontWeight={700}>{field.label}</Typography>
+                              <Typography variant="body2" color="text.secondary">{field.key} · {field.type}</Typography>
+                            </Box>
+                            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                              <Chip label={field.required ? "Обязательное" : "Необязательное"} color={field.required ? "primary" : "default"} />
+                              <Chip label={field.visible ? "Видимое" : "Скрыто"} color={field.visible ? "secondary" : "default"} />
+                            </Stack>
+                          </Box>
+                          {field.description && <Typography color="text.secondary">{field.description}</Typography>}
+                          {field.options.length > 0 && (
+                            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                              {field.options.map((option) => (
+                                <Chip key={option.value} label={option.label} />
+                              ))}
+                            </Stack>
+                          )}
+                          {access.allowed && (
+                            <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                              <Button
+                                variant="outlined"
+                                onClick={() => {
+                                  void handleToggleField(field.id, { required: !field.required });
+                                }}
+                              >
+                                {field.required ? "Сделать необязательным" : "Сделать обязательным"}
+                              </Button>
+                              <Button
+                                variant="outlined"
+                                onClick={() => {
+                                  void handleToggleField(field.id, { visible: !field.visible });
+                                }}
+                              >
+                                {field.visible ? "Скрыть" : "Показать"}
+                              </Button>
+                              <Button
+                                variant="outlined"
+                                color="error"
+                                startIcon={<DeleteOutlineIcon />}
+                                onClick={() => {
+                                  void handleDeleteField(field.id);
+                                }}
+                              >
+                                Удалить
+                              </Button>
+                            </Stack>
+                          )}
+                        </Stack>
+                      </Box>
+                    ))}
+                  </Stack>
                 </Stack>
               </CardContent>
             </Card>

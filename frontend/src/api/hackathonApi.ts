@@ -5,6 +5,7 @@ import type {
   CreateOrganizerRequest,
   CreateTeamApplicationRequest,
   FormField,
+  FormFieldScope,
   Hackathon,
   Page,
   Team,
@@ -92,11 +93,25 @@ export const hackathonApi = {
     return response.data;
   },
 
-  async fields(id: string, scope?: string) {
+  async fields(id: string, scope?: FormFieldScope) {
     const response = await api.get<FormField[]>(`/hackathons/${id}/form-fields`, {
       params: { scope },
     });
     return response.data;
+  },
+
+  async createField(id: string, data: Omit<FormField, "id" | "hackathonId">) {
+    const response = await api.post<FormField>(`/hackathons/${id}/form-fields`, data);
+    return response.data;
+  },
+
+  async updateField(hackathonId: string, fieldId: string, data: Partial<Omit<FormField, "id" | "hackathonId">>) {
+    const response = await api.patch<FormField>(`/hackathons/${hackathonId}/form-fields/${fieldId}`, data);
+    return response.data;
+  },
+
+  async deleteField(hackathonId: string, fieldId: string) {
+    await api.delete(`/hackathons/${hackathonId}/form-fields/${fieldId}`);
   },
 };
 
