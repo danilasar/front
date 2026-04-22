@@ -2,6 +2,7 @@ import AdminPanel from "./pages/AdminPanel";
 import HackathonDetails from "./pages/HackathonDetails";
 import Hackathons from "./pages/Hackathons";
 import Home from "./pages/Home";
+import Invite from "./pages/Invite";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import Profile from "./pages/Profile";
@@ -28,6 +29,7 @@ export const navRouters: RouteConfig[] = [
 export const routes: RouteConfig[] = [
   { label: "Регистрация", path: "/register", element: <Register />, isGuest: true },
   { label: "Вход", path: "/login", element: <Login />, isGuest: true },
+  { label: "Приглашение", path: "/invite/:token", element: <Invite />, inNav: false },
   { label: "Команды", path: "/hackathons/:hackathonId/teams", element: <Teams />, isPrivate: true, inNav: false },
   { label: "Хакатон", path: "/hackathons/:hackathonId", element: <HackathonDetails />, inNav: false },
   ...navRouters,

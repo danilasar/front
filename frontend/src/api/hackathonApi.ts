@@ -1,6 +1,7 @@
 import api from "./axios";
 import type {
   AuthResponse,
+  CompleteInvitationRegistrationRequest,
   CreateHackathonRequest,
   CreateOrganizerRequest,
   CreateTeamApplicationRequest,
@@ -13,6 +14,7 @@ import type {
   TeamStatus,
   TokenPair,
   UserProfile,
+  Invitation,
 } from "../domain/types";
 
 export const authApi = {
@@ -138,6 +140,23 @@ export const teamApi = {
 
   async disqualifyMember(hackathonId: string, teamId: string, memberId: string) {
     const response = await api.post<Team>(`/hackathons/${hackathonId}/teams/${teamId}/members/${memberId}/disqualify`);
+    return response.data;
+  },
+};
+
+export const invitationApi = {
+  async get(token: string) {
+    const response = await api.get<Invitation>(`/invitations/${token}`);
+    return response.data;
+  },
+
+  async acceptExisting(token: string) {
+    const response = await api.post<Team>(`/invitations/${token}/accept-existing`);
+    return response.data;
+  },
+
+  async completeRegistration(token: string, data: CompleteInvitationRegistrationRequest) {
+    const response = await api.post<AuthResponse>(`/invitations/${token}/complete-registration`, data);
     return response.data;
   },
 };

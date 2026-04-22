@@ -14,6 +14,7 @@ Implemented user-facing scenarios:
 - fill configured team fields in an application;
 - add existing team members by login;
 - add new team members and receive invite links;
+- open invite links and accept them with an existing account or complete new participant registration;
 - view team applications in a status-filtered table;
 - moderate teams by admitting, rejecting, or disqualifying them;
 - disqualify individual team members;
@@ -118,6 +119,7 @@ password
 - `/hackathons/:hackathonId/teams` - team applications;
 - `/admin` - admin panel;
 - `/profile` - profile;
+- `/invite/:token` - invite onboarding;
 - `/login` - login;
 - `/register` - registration.
 

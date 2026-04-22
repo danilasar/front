@@ -802,16 +802,37 @@ async function handleApi(req, res, url, path, body) {
       return;
     }
     if (req.method === "POST" && invitationMatch[2] === "accept-existing") {
-      requireUser(req, res);
+      const current = requireUser(req, res);
       if (res.writableEnded) return;
       invitation.status = "accepted";
-      send(res, 200, teams.find((item) => item.id === invitation.teamId));
+      const team = teams.find((item) => item.id === invitation.teamId);
+      const member = team?.members.find((item) => item.id === invitation.memberId);
+      if (member && current) {
+        member.user = publicUser(current);
+        member.login = current.login;
+        member.fullName = current.fullName;
+        member.email = current.email;
+        member.source = "existing_user";
+        member.status = "active";
+      }
+      send(res, 200, team);
       return;
     }
     if (req.method === "POST" && invitationMatch[2] === "complete-registration") {
       const created = user({ email: body.email, fullName: body.fullName, password: body.password, role: "participant", profileFields: body.profileFields ?? {} });
       users.push(created);
       invitation.status = "accepted";
+      const team = teams.find((item) => item.id === invitation.teamId);
+      const member = team?.members.find((item) => item.id === invitation.memberId);
+      if (member) {
+        member.user = publicUser(created);
+        member.login = created.login;
+        member.fullName = created.fullName;
+        member.email = created.email;
+        member.source = "invited_new_user";
+        member.status = "active";
+        member.profileFields = body.profileFields ?? {};
+      }
       send(res, 201, { user: created, tokens: tokensFor(created) });
       return;
     }

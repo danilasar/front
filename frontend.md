@@ -499,6 +499,13 @@ Legacy страницы:
 - принимает `PATCH /hackathons/:hackathonId/form-fields/:fieldId`;
 - принимает `DELETE /hackathons/:hackathonId/form-fields/:fieldId`.
 
+Для приглашений mock backend:
+
+- принимает `GET /invitations/:token`;
+- принимает `POST /invitations/:token/accept-existing`;
+- принимает `POST /invitations/:token/complete-registration`;
+- после принятия обновляет участника внутри команды.
+
 ## Тесты
 
 Тесты лежат в `tests/access.test.ts`.
@@ -522,6 +529,7 @@ Legacy страницы:
 - валидация PDF-регламента.
 - helpers конструктора полей команды: key, label, options, payload.
 - helpers значений полей команды: trim, required validation, payload fields.
+- helpers invite onboarding: предзаполнение формы, валидация, payload завершения регистрации.
 
 Проверки перед последним документированием:
 
@@ -549,26 +557,26 @@ npm run build
 - подключение team fields к форме заявки;
 - командная заявка участника;
 - invite-ссылки для новых участников;
+- onboarding по invite-ссылке: просмотр приглашения, принятие существующим аккаунтом, завершение регистрации нового участника;
 - таблица заявок с фильтром по статусу;
 - управление статусами команд: допуск, отклонение, дисквалификация;
 - дисквалификация отдельных участников из UI;
 - экспорт CSV/XLSX из таблицы заявок;
-- доменные тесты формы доступа, админки и команд.
+- доменные тесты формы доступа, админки, команд и invite onboarding.
 
 Не готово:
 
-- onboarding по invite-ссылке;
 - компонентные тесты ключевых форм;
 - полноценные API adapter tests;
 - удаление legacy quote/user кода.
 
 ## Следующий План
 
-Наиболее логичный следующий блок - invite onboarding:
+Наиболее логичный следующий блок - расчистка legacy template-кода и стабилизация API-слоя:
 
-1. Добавить страницу `/invite/:token`.
-2. Показать данные приглашения и предзаполненные поля.
-3. Реализовать сценарий принятия существующим аккаунтом.
-4. Реализовать завершение регистрации нового участника.
+1. Убрать `QuoteCard`, `Quotes`, `RandomQuote`, `CreateQuote`, `store/quote`, legacy `store/user` и старые quote/user entities, если они больше не используются.
+2. Добавить API adapter tests для `hackathonApi`: auth, hackathons, teams, admin, invitations.
+3. Сверить DTO с `openapi.yaml` и добавить typed helpers для ошибок API.
+4. После стабилизации контрактов добавить компонентные тесты ключевых форм.
 
-Практически лучше продолжить invite onboarding: капитан уже получает invite-ссылки, но у приглашенного участника пока нет frontend-сценария принятия.
+Практически лучше начать с legacy cleanup: это уменьшит шум в store/entities/routes и сделает дальнейшие тесты API-адаптеров проще.

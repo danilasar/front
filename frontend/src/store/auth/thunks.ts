@@ -1,7 +1,8 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import type { AxiosError } from "axios";
-import { authApi } from "../../api/hackathonApi";
+import { authApi, invitationApi } from "../../api/hackathonApi";
 import type { ApiError } from "../../api/type";
+import type { CompleteInvitationRegistrationRequest } from "../../domain/types";
 import { getErrorMessage } from "../../utils/errorTemplateMessage";
 import { setError, startLoading, stopLoading } from "../settings";
 import { authFailed, authSuccess, clearAuth } from "./slice";
@@ -42,6 +43,26 @@ export const register = createAsyncThunk(
     try {
       dispatch(startLoading());
       const response = await authApi.register(data);
+      persistTokens(response.tokens);
+      dispatch(authSuccess(response.user));
+      return response.user;
+    } catch (e: unknown) {
+      const error = e as AxiosError<ApiError>;
+      dispatch(authFailed());
+      dispatch(setError(getErrorMessage(error)));
+      return null;
+    } finally {
+      dispatch(stopLoading());
+    }
+  },
+);
+
+export const completeInviteRegistration = createAsyncThunk(
+  "auth/completeInviteRegistration",
+  async (data: { token: string; form: CompleteInvitationRegistrationRequest }, { dispatch }) => {
+    try {
+      dispatch(startLoading());
+      const response = await invitationApi.completeRegistration(data.token, data.form);
       persistTokens(response.tokens);
       dispatch(authSuccess(response.user));
       return response.user;

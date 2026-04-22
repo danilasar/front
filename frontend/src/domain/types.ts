@@ -191,6 +191,27 @@ export type TeamApplicationResponse = {
   }>;
 };
 
+export type InvitationStatus = "pending" | "accepted" | "expired";
+
+export type Invitation = {
+  token: string;
+  hackathonId: ID;
+  teamId: ID;
+  memberId: ID;
+  fullName: string;
+  email: string | null;
+  status: InvitationStatus;
+  prefilledProfileFields: DynamicFieldValues;
+  expiresAt: string;
+};
+
+export type CompleteInvitationRegistrationRequest = {
+  email: string;
+  password: string;
+  fullName: string;
+  profileFields?: DynamicFieldValues;
+};
+
 export type CreateOrganizerRequest = {
   email: string;
   password: string;

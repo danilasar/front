@@ -40,6 +40,11 @@ import {
   validateTeamFieldForm,
 } from "../frontend/src/domain/teamFieldForms.ts";
 import {
+  toInviteRegistrationInitialValues,
+  toInviteRegistrationRequest,
+  validateInviteRegistrationForm,
+} from "../frontend/src/domain/inviteForms.ts";
+import {
   prepareTeamFieldValues,
   validateRequiredTeamFields,
 } from "../frontend/src/domain/teamFieldValues.ts";
@@ -486,4 +491,31 @@ test("значения полей команды подготавливаютс�
     "Заполните поле команды: Трек",
     "Заполните поле команды: Удаленно",
   ]);
+});
+
+test("форма invite onboarding использует предзаполненные значения и готовит payload", () => {
+  const values = toInviteRegistrationInitialValues({
+    token: "invite-token",
+    hackathonId: "hackathon-1",
+    teamId: "team-1",
+    memberId: "member-1",
+    fullName: "Bob Newbie",
+    email: "bob@example.test",
+    status: "pending",
+    prefilledProfileFields: { education: "Университет", course: "2" },
+    expiresAt: "2026-12-31T23:59:59.000Z",
+  });
+
+  assert.equal(values.fullName, "Bob Newbie");
+  assert.equal(values.education, "Университет");
+  assert.equal(validateInviteRegistrationForm(values).valid, true);
+  assert.deepEqual(toInviteRegistrationRequest(values), {
+    fullName: "Bob Newbie",
+    email: "bob@example.test",
+    password: "password",
+    profileFields: {
+      education: "Университет",
+      course: "2",
+    },
+  });
 });
