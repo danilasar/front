@@ -15,6 +15,11 @@ pub struct Hackathon {
     pub registration_closes_at: Option<DateTime<Utc>>,
     pub min_team_size: i32,
     pub max_team_size: i32,
+    pub rules_file_id: Option<Uuid>,
+    pub hero_title: Option<String>,
+    pub hero_subtitle: Option<String>,
+    pub cover_file_id: Option<Uuid>,
+    pub landing_content: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }

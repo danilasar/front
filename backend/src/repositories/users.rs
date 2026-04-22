@@ -44,7 +44,7 @@ impl<Db: sqlx::Database> UserRepo<Db> {
 impl UserRepository for UserRepo<Postgres> {
     async fn get(&self, offset: &Offset, limit: &Limit) -> sqlx::Result<Vec<User>> {
         sqlx::query_as::<_, User>(
-            "SELECT id, name, email, role as \"role: Role\", password_hash
+            "SELECT id, full_name, email, role as \"role: Role\", password_hash, education, course, phone, telegram, vk, food_allergies, tshirt_size, avatar_file_id, profile_fields, created_at, updated_at
             FROM users
             LIMIT $1 OFFSET $2"
         )
@@ -56,7 +56,7 @@ impl UserRepository for UserRepo<Postgres> {
 
     async fn get_by_id(&self, id: &Uuid) -> sqlx::Result<Option<User>> {
         sqlx::query_as::<_, User>(
-            "SELECT id, name, email, role as \"role: Role\", password_hash FROM users WHERE id = $1"
+            "SELECT id, full_name, email, role as \"role: Role\", password_hash, education, course, phone, telegram, vk, food_allergies, tshirt_size, avatar_file_id, profile_fields, created_at, updated_at FROM users WHERE id = $1"
         )
         .bind(id)
         .fetch_optional(self.db_pool.as_ref())
@@ -65,7 +65,7 @@ impl UserRepository for UserRepo<Postgres> {
 
     async fn get_by_email(&self, email: &str) -> sqlx::Result<Option<User>> {
         sqlx::query_as::<_, User>(
-            "SELECT id, name, email, role as \"role: Role\", password_hash FROM users WHERE email = $1"
+            "SELECT id, full_name, email, role as \"role: Role\", password_hash, education, course, phone, telegram, vk, food_allergies, tshirt_size, avatar_file_id, profile_fields, created_at, updated_at FROM users WHERE email = $1"
         )
         .bind(email)
         .fetch_optional(self.db_pool.as_ref())
@@ -74,7 +74,7 @@ impl UserRepository for UserRepo<Postgres> {
 
     async fn check_login(&self, email: &str, password_hash: &str) -> sqlx::Result<Option<User>> {
         sqlx::query_as::<_, User>(
-            "SELECT id, name, email, role as \"role: Role\", password_hash
+            "SELECT id, full_name, email, role as \"role: Role\", password_hash, education, course, phone, telegram, vk, food_allergies, tshirt_size, avatar_file_id, profile_fields, created_at, updated_at
             FROM users
             WHERE email = $1 AND password_hash = $2"
         )
@@ -91,15 +91,16 @@ impl UserRepository for UserRepo<Postgres> {
         let mut user_data: User = user.into();
         user_data.role = Role::Admin;
         sqlx::query_as::<_, User>(
-            "INSERT INTO users (id, name, email, role, password_hash)
-            VALUES ($1, $2, $3, $4, $5)
-            RETURNING id, name, email, role as \"role: Role\", password_hash"
+            "INSERT INTO users (id, full_name, email, role, password_hash, profile_fields)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING id, full_name, email, role as \"role: Role\", password_hash, education, course, phone, telegram, vk, food_allergies, tshirt_size, avatar_file_id, profile_fields, created_at, updated_at"
         )
         .bind(user_data.id)
-        .bind(user_data.name)
+        .bind(user_data.full_name)
         .bind(user_data.email)
         .bind(String::from(user_data.role))
         .bind(user_data.password_hash)
+        .bind(user_data.profile_fields)
         .fetch_one(executer)
         .await
     }
@@ -110,15 +111,16 @@ impl UserRepository for UserRepo<Postgres> {
     {
         let user_data: User = user.into();
         sqlx::query_as::<_, User>(
-            "INSERT INTO users (id, name, email, role, password_hash)
-            VALUES ($1, $2, $3, $4, $5)
-            RETURNING id, name, email, role as \"role: Role\", password_hash"
+            "INSERT INTO users (id, full_name, email, role, password_hash, profile_fields)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING id, full_name, email, role as \"role: Role\", password_hash, education, course, phone, telegram, vk, food_allergies, tshirt_size, avatar_file_id, profile_fields, created_at, updated_at"
         )
         .bind(user_data.id)
-        .bind(user_data.name)
+        .bind(user_data.full_name)
         .bind(user_data.email)
         .bind(String::from(user_data.role))
         .bind(user_data.password_hash)
+        .bind(user_data.profile_fields)
         .fetch_one(executer)
         .await
     }
@@ -129,14 +131,23 @@ impl UserRepository for UserRepo<Postgres> {
     {
         sqlx::query(
             "UPDATE users
-            SET name = $2, email = $3, role = $4, password_hash = $5
+            SET full_name = $2, email = $3, role = $4, password_hash = $5, education = $6, course = $7, phone = $8, telegram = $9, vk = $10, food_allergies = $11, tshirt_size = $12, avatar_file_id = $13, profile_fields = $14, updated_at = NOW()
             WHERE id = $1"
         )
         .bind(user.id)
-        .bind(user.name)
+        .bind(user.full_name)
         .bind(user.email)
         .bind(String::from(user.role))
         .bind(user.password_hash)
+        .bind(user.education)
+        .bind(user.course)
+        .bind(user.phone)
+        .bind(user.telegram)
+        .bind(user.vk)
+        .bind(user.food_allergies)
+        .bind(user.tshirt_size)
+        .bind(user.avatar_file_id)
+        .bind(user.profile_fields)
         .execute(executer)
         .await
     }

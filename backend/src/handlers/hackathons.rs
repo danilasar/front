@@ -1,9 +1,9 @@
 use axum::{
     Json, Router,
-    extract::{Path, State},
+    extract::{Path, State, Multipart},
     http::StatusCode,
     response::IntoResponse,
-    routing::{get, post},
+    routing::{get, post, patch, delete, put},
 };
 use utoipa::OpenApi;
 use uuid::Uuid;
@@ -11,7 +11,7 @@ use uuid::Uuid;
 use crate::{
     AppState,
     repositories::hackathons::HackathonRepository,
-    schemas::hackathons::{HackathonResponse, CreateHackathonRequest},
+    schemas::hackathons::{HackathonResponse, CreateHackathonRequest, FileAsset},
 };
 
 pub struct HackathonRouter;
@@ -23,13 +23,16 @@ impl HackathonRouter {
             .route("/", post(create_hackathon))
             .route("/active", get(get_active_hackathon))
             .route("/{id}", get(get_hackathon))
+            .route("/{id}", patch(update_hackathon))
+            .route("/{id}", delete(delete_hackathon))
             .route("/{id}/activate", post(activate_hackathon))
+            .route("/{id}/rules", put(upload_rules))
     }
 }
 
 #[derive(OpenApi)]
 #[openapi(
-    paths(list_hackathons, create_hackathon, get_active_hackathon, get_hackathon, activate_hackathon),
+    paths(list_hackathons, create_hackathon, get_active_hackathon, get_hackathon, update_hackathon, delete_hackathon, activate_hackathon, upload_rules),
     components(schemas(HackathonResponse, CreateHackathonRequest))
 )]
 pub struct HackathonDocs;
@@ -119,6 +122,37 @@ pub async fn get_hackathon(
 }
 
 #[utoipa::path(
+    patch,
+    tag = "Hackathons",
+    path = "/{id}",
+    responses(
+        (status = 200, description = "Hackathon updated", body = HackathonResponse),
+        (status = 404, description = "Hackathon not found")
+    )
+)]
+pub async fn update_hackathon(
+    Path(_id): Path<Uuid>,
+    State(_state): State<AppState>,
+) -> Result<StatusCode, StatusCode> {
+    todo!("Реализовать обновление полей хакатона")
+}
+
+#[utoipa::path(
+    delete,
+    tag = "Hackathons",
+    path = "/{id}",
+    responses(
+        (status = 204, description = "Hackathon deleted")
+    )
+)]
+pub async fn delete_hackathon(
+    Path(_id): Path<Uuid>,
+    State(_state): State<AppState>,
+) -> Result<StatusCode, StatusCode> {
+    todo!("Реализовать удаление хакатона")
+}
+
+#[utoipa::path(
     post,
     tag = "Hackathons",
     path = "/{id}/activate",
@@ -126,7 +160,7 @@ pub async fn get_hackathon(
         ("id" = Uuid, Path, description = "Hackathon ID")
     ),
     responses(
-        (status = 204, description = "Hackathon activated"),
+        (status = 200, description = "Hackathon activated", body = HackathonResponse),
         (status = 404, description = "Hackathon not found")
     )
 )]
@@ -136,7 +170,45 @@ pub async fn activate_hackathon(
 ) -> Result<impl IntoResponse, StatusCode> {
     let repo = state.hackathon_repo.clone();
     match repo.activate(&id).await {
-        Ok(_) => Ok(StatusCode::NO_CONTENT),
+        Ok(_) => {
+            if let Ok(Some(h)) = repo.get_by_id(&id).await {
+                Ok((StatusCode::OK, Json(HackathonResponse::from(h))))
+            } else {
+                Err(StatusCode::INTERNAL_SERVER_ERROR)
+            }
+        },
         Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
     }
+}
+
+#[utoipa::path(
+    put,
+    tag = "Hackathons",
+    path = "/{id}/rules",
+    responses(
+        (status = 200, description = "Rules uploaded", body = FileAsset)
+    )
+)]
+pub async fn upload_rules(
+    Path(id): Path<Uuid>,
+    State(state): State<AppState>,
+    mut multipart: Multipart,
+) -> Result<impl IntoResponse, StatusCode> {
+    while let Ok(Some(field)) = multipart.next_field().await {
+        if let Some("file") = field.name() {
+             let file_id = Uuid::new_v4();
+             sqlx::query("UPDATE hackathons SET rules_file_id = $1 WHERE id = $2")
+                .bind(file_id)
+                .bind(id)
+                .execute(state.hackathon_repo.db_pool.as_ref())
+                .await
+                .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+             return Ok(Json(FileAsset {
+                 id: file_id,
+                 url: format!("/api/v1/files/{}", file_id),
+             }));
+        }
+    }
+    Err(StatusCode::BAD_REQUEST)
 }

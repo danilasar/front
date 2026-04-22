@@ -7,6 +7,9 @@ use std::sync::Arc;
 use crate::repositories::tokens::TokenRepo;
 use crate::repositories::users::UserRepo;
 use crate::repositories::hackathons::HackathonRepo;
+use crate::repositories::teams::TeamRepo;
+use crate::repositories::team_members::TeamMemberRepo;
+use crate::repositories::invitations::InvitationRepo;
 use crate::services::auth::tokens::TokenService;
 
 pub struct Config {
@@ -31,11 +34,11 @@ pub async fn get_db_pool(database_url: &str) -> sqlx::PgPool {
 
 #[derive(Clone)]
 pub struct AppState {
-    // NOTE: Репозитории
     pub user_repo: Arc<UserRepo<Postgres>>,
     pub hackathon_repo: Arc<HackathonRepo>,
-
-    // NOTE: Сервисы
+    pub team_repo: Arc<TeamRepo>,
+    pub member_repo: Arc<TeamMemberRepo>,
+    pub invite_repo: Arc<InvitationRepo>,
     pub token_serv: Arc<TokenService<Postgres>>,
 }
 
@@ -48,12 +51,13 @@ impl AppState {
         let secret_key = Arc::new(secret_key);
         let secret_refresh_key = Arc::new(secret_refresh_key);
 
-        // NOTE: Репозитории
         let user_repo = Arc::new(UserRepo::new(db_pool.clone()));
         let token_repo = Arc::new(TokenRepo::new(db_pool.clone()));
         let hackathon_repo = Arc::new(HackathonRepo::new(db_pool.clone()));
+        let team_repo = Arc::new(TeamRepo::new(db_pool.clone()));
+        let member_repo = Arc::new(TeamMemberRepo::new(db_pool.clone()));
+        let invite_repo = Arc::new(InvitationRepo::new(db_pool.clone()));
 
-        // NOTE: Сервисы
         let token_serv = Arc::new(TokenService::new(
             secret_key.clone(),
             secret_refresh_key.clone(),
@@ -67,6 +71,9 @@ impl AppState {
             token_serv,
             user_repo,
             hackathon_repo,
+            team_repo,
+            member_repo,
+            invite_repo,
         }
     }
 }

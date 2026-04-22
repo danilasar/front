@@ -2,27 +2,49 @@ use enum_iterator::{Sequence, all};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
+use chrono::{DateTime, Utc};
 
 use crate::{schemas::users::RegisterUser, services::auth::hashing::hash};
 
 #[derive(Debug, Serialize, Deserialize, Clone, sqlx::FromRow)]
 pub struct User {
     pub id: Uuid,
-    pub name: String,
+    pub full_name: String,
     pub email: String,
     pub role: Role,
-    #[serde(skip_serializing)]
     pub password_hash: String,
+    pub education: Option<String>,
+    pub course: Option<String>,
+    pub phone: Option<String>,
+    pub telegram: Option<String>,
+    pub vk: Option<String>,
+    pub food_allergies: Option<String>,
+    pub tshirt_size: Option<String>,
+    pub avatar_file_id: Option<Uuid>,
+    pub profile_fields: serde_json::Value,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 impl From<RegisterUser> for User {
     fn from(value: RegisterUser) -> Self {
         Self {
             id: Uuid::new_v4(),
-            name: value.full_name,
+            full_name: value.full_name,
             email: value.email,
             role: Role::Participant,
             password_hash: hash(&value.password),
+            education: None,
+            course: None,
+            phone: None,
+            telegram: None,
+            vk: None,
+            food_allergies: None,
+            tshirt_size: None,
+            avatar_file_id: None,
+            profile_fields: serde_json::json!({}),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
         }
     }
 }
@@ -39,10 +61,6 @@ pub enum Role {
 impl Role {
     pub fn all() -> Vec<Self> {
         all::<Role>().collect()
-    }
-
-    pub fn admin_only() -> Vec<Self> {
-        vec![Role::Admin]
     }
 }
 

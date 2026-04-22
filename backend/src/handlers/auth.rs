@@ -27,12 +27,13 @@ impl AuthRouter {
             .route("/register", post(register))
             .route("/login", post(login))
             .route("/refresh", post(refresh))
+            .route("/logout", post(logout))
     }
 }
 
 #[derive(OpenApi)]
 #[openapi(
-    paths(register, login, refresh),
+    paths(register, login, refresh, logout),
     components(schemas(LoginUser, RegisterUser, RefreshTokenRequest, Tokens, AuthResponse, UserProfile))
 )]
 pub struct AuthDocs;
@@ -40,12 +41,11 @@ pub struct AuthDocs;
 #[utoipa::path(
     post,
     path = "/register",
-    tag = "auth",
+    tag = "Auth",
     request_body = RegisterUser,
     responses(
         (status = 201, description = "User registered successfully", body = AuthResponse),
         (status = 409, description = "User with this email already exists", body = String),
-        (status = 422, description = "Validation error", body = String),
         (status = 500, description = "Internal database error", body = String)
     )
 )]
@@ -78,7 +78,7 @@ pub async fn register(
 #[utoipa::path(
     post,
     path = "/login",
-    tag = "auth",
+    tag = "Auth",
     request_body = LoginUser,
     responses(
         (status = 200, description = "Login successful", body = AuthResponse),
@@ -112,7 +112,7 @@ pub async fn login(
 #[utoipa::path(
     post,
     path = "/refresh",
-    tag = "auth",
+    tag = "Auth",
     request_body = RefreshTokenRequest,
     responses(
         (status = 200, description = "Tokens refreshed successfully", body = Tokens),
@@ -130,4 +130,18 @@ pub async fn refresh(
         StatusCode::OK,
         Json(token_serv.refresh_tokens(payload.refresh_token).await?),
     ))
+}
+
+#[utoipa::path(
+    post,
+    path = "/logout",
+    tag = "Auth",
+    responses(
+        (status = 204, description = "Logged out successfully")
+    )
+)]
+pub async fn logout() -> impl IntoResponse {
+    // В простейшем случае на клиенте просто удаляется токен.
+    // На сервере можно добавить инвалидацию JTI в Redis, если нужно.
+    StatusCode::NO_CONTENT
 }
