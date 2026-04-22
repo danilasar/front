@@ -83,6 +83,15 @@ export const hackathonApi = {
     return response.data;
   },
 
+  async uploadRules(id: string, file: File) {
+    const data = new FormData();
+    data.append("file", file);
+    const response = await api.put<Hackathon>(`/hackathons/${id}/rules`, data, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data;
+  },
+
   async fields(id: string, scope?: string) {
     const response = await api.get<FormField[]>(`/hackathons/${id}/form-fields`, {
       params: { scope },

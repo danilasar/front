@@ -250,6 +250,11 @@ function requireAssignedOrganizer(req, res, hackathonId) {
 function readBody(req) {
   return new Promise((resolve) => {
     let raw = "";
+    if (req.headers["content-type"]?.includes("multipart/form-data")) {
+      req.on("data", () => {});
+      req.on("end", () => resolve({}));
+      return;
+    }
     req.on("data", (chunk) => {
       raw += chunk;
     });
@@ -578,7 +583,20 @@ async function handleApi(req, res, url, path, body) {
   if (rulesMatch && req.method === "PUT") {
     requireAssignedOrganizer(req, res, rulesMatch[1]);
     if (res.writableEnded) return;
-    send(res, 200, files[0]);
+    const hackathon = hackathons.find((item) => item.id === rulesMatch[1]);
+    if (!hackathon) return notFound(res);
+    const uploaded = {
+      id: randomUUID(),
+      url: `http://127.0.0.1:${port}/mock-rules-${Date.now()}.pdf`,
+      originalName: "rules.pdf",
+      mimeType: "application/pdf",
+      sizeBytes: Number(req.headers["content-length"] ?? 0),
+      createdAt: now(),
+    };
+    files.push(uploaded);
+    hackathon.rulesFile = uploaded;
+    hackathon.updatedAt = now();
+    send(res, 200, hackathon);
     return;
   }
 

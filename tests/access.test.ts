@@ -33,6 +33,7 @@ import {
   formatHackathonPeriod,
   hackathonStatusLabels,
 } from "../frontend/src/domain/hackathonManagement.ts";
+import { validateRulesPdf } from "../frontend/src/domain/rulesUpload.ts";
 import type { Hackathon, Team, UserProfile } from "../frontend/src/domain/types.ts";
 
 const hackathon = (organizerIds: string[]): Pick<Hackathon, "organizerIds"> => ({
@@ -375,4 +376,15 @@ test("админские helpers фильтруют архив хакатоно�
   assert.deepEqual(filterHackathons(hackathons, "archived").map((item) => item.id), ["archived"]);
   assert.equal(hackathonStatusLabels.active, "Активный");
   assert.match(formatHackathonPeriod(hackathons[0]), /01\.06\.2026 - 03\.06\.2026/);
+});
+
+test("валидация PDF-регламента принимает только PDF до 10 МБ", () => {
+  const pdf = new File(["rules"], "rules.pdf", { type: "application/pdf" });
+  const text = new File(["rules"], "rules.txt", { type: "text/plain" });
+  const large = new File([new Uint8Array(11 * 1024 * 1024)], "rules.pdf", { type: "application/pdf" });
+
+  assert.equal(validateRulesPdf(null).valid, false);
+  assert.equal(validateRulesPdf(pdf).valid, true);
+  assert.equal(validateRulesPdf(text).error, "Регламент должен быть PDF-файлом");
+  assert.equal(validateRulesPdf(large).error, "PDF-регламент должен быть меньше 10 МБ");
 });

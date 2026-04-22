@@ -94,6 +94,24 @@ export const activateHackathon = createAsyncThunk(
   },
 );
 
+export const uploadHackathonRules = createAsyncThunk(
+  "hackathons/rules",
+  async (data: { hackathonId: string; file: File }, { dispatch }) => {
+    try {
+      dispatch(startLoading());
+      const response = await hackathonApi.uploadRules(data.hackathonId, data.file);
+      dispatch(upsertHackathon(response));
+      return response;
+    } catch (e: unknown) {
+      const error = e as AxiosError<ApiError>;
+      dispatch(setError(getErrorMessage(error)));
+      return null;
+    } finally {
+      dispatch(stopLoading());
+    }
+  },
+);
+
 export const fetchFormFields = createAsyncThunk(
   "hackathons/fields",
   async (data: { hackathonId: string; scope?: string }, { dispatch }) => {
