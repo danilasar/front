@@ -298,24 +298,6 @@ function notFound(res) {
   send(res, 404, { code: "not_found", message: "Маршрут не найден" });
 }
 
-function legacyUser(value) {
-  const [firstName, ...rest] = value.fullName.split(" ");
-  return {
-    id: 1,
-    email: value.email,
-    firstName: firstName || value.fullName,
-    secondName: rest.join(" ") || "Пользователь",
-  };
-}
-
-function legacyQuote(team = teams[0]) {
-  return {
-    quoteText: `${team.name}: заявка на ${hackathons[0].title}`,
-    username: users[2].fullName,
-    creationDate: team.createdAt,
-  };
-}
-
 const exportHeaders = ["Команда", "Статус", "Капитан", "Состав", "Дата подачи", "Причина"];
 
 const exportTeamStatusLabels = {
@@ -544,64 +526,6 @@ function buildTeamsXlsx(hackathonId) {
       content: buildWorksheetXml(hackathonId),
     },
   ]));
-}
-
-async function handleLegacy(req, res, url, path, body) {
-  if (req.method === "POST" && path === "/Auth/Login") {
-    const found = users.find((item) => item.email === body.email) ?? users[0];
-    send(res, 200, { accessToken: tokensFor(found).accessToken, refreshToken: tokensFor(found).refreshToken });
-    return true;
-  }
-  if (req.method === "POST" && path === "/Auth/Registration") {
-    const created = user({
-      email: body.email ?? `user-${Date.now()}@example.test`,
-      fullName: `${body.firstName ?? "Новый"} ${body.secondName ?? "Пользователь"}`,
-      role: "participant",
-      password: body.password,
-    });
-    users.push(created);
-    send(res, 200, { accessToken: tokensFor(created).accessToken, refreshToken: tokensFor(created).refreshToken });
-    return true;
-  }
-  if ((req.method === "POST" || req.method === "PUT") && path === "/Auth/RefreshAllTokens") {
-    const current = parseToken(req) ?? users[0];
-    send(res, 200, { accessToken: tokensFor(current).accessToken, refreshToken: tokensFor(current).refreshToken });
-    return true;
-  }
-  if (req.method === "GET" && path === "/User/myprofile") {
-    const current = parseToken(req) ?? users[0];
-    send(res, 200, legacyUser(current));
-    return true;
-  }
-  if (req.method === "POST" && path === "/Quote") {
-    const text = url.searchParams.get("quoteText") ?? body.quoteText ?? "Новая цитата";
-    const team = {
-      ...teams[0],
-      id: randomUUID(),
-      name: text,
-      createdAt: now(),
-      updatedAt: now(),
-    };
-    teams.push(team);
-    send(res, 201, legacyQuote(team));
-    return true;
-  }
-  const quotePageMatch = path.match(/^\/Quote\/(\d+)\/(\d+)$/);
-  if (req.method === "GET" && quotePageMatch) {
-    const offset = Number(quotePageMatch[1]);
-    const limit = Number(quotePageMatch[2]);
-    send(res, 200, teams.slice(offset, offset + limit).map(legacyQuote));
-    return true;
-  }
-  if (req.method === "GET" && path === "/Quote/TotalQuotes") {
-    send(res, 200, teams.length);
-    return true;
-  }
-  if (req.method === "GET" && path === "/Quote/GetRand") {
-    send(res, 200, legacyQuote(teams[teams.length - 1]));
-    return true;
-  }
-  return false;
 }
 
 async function handleApi(req, res, url, path, body) {
@@ -1137,7 +1061,6 @@ const server = createServer(async (req, res) => {
 
   try {
     const body = await readBody(req);
-    if (await handleLegacy(req, res, url, path, body)) return;
     await handleApi(req, res, url, path, body);
   } catch (error) {
     console.error(error);

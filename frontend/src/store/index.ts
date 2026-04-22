@@ -4,7 +4,6 @@ import authReducer from "./auth/slice";
 import hackathonsReducer from "./hackathons/slice";
 import teamsReducer from "./teams/slice";
 import adminReducer from "./admin/slice";
-import quoteReducer from "./quote/slice"
 
 export const store = configureStore({
   reducer: {
@@ -13,7 +12,6 @@ export const store = configureStore({
     hackathons: hackathonsReducer,
     teams: teamsReducer,
     admin: adminReducer,
-    quotes: quoteReducer,
   }
 })
 

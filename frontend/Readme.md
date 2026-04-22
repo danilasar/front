@@ -123,8 +123,4 @@ password
 - `/login` - login;
 - `/register` - registration.
 
-## Notes
-
-Legacy quote pages and stores are still present from the original template and are planned for removal.
-
 Detailed frontend documentation is in `../frontend.md`.

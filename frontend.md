@@ -89,8 +89,6 @@ Axios: реализация методов `GET`, `POST`, `PUT`, `DELETE`, `PATC
 - добавление в заявку существующих участников по логину;
 - добавление новых участников с выдачей invite-ссылок.
 
-В проекте еще остается legacy quote-код из исходного шаблона. Он не является целевым доменом и должен постепенно удаляться.
-
 ## Стек
 
 - React 19
@@ -198,7 +196,6 @@ frontend/
     components/           переиспользуемые компоненты приложения
     components/wrappers/  обертки авторизации, доступа и загрузки
     domain/               доменные типы, правила доступа и form helpers
-    entities/             legacy типы quote/user
     pages/                страницы роутера
     store/                Redux store, slices, thunks, typed hooks
     types/                декларации типов
@@ -267,8 +264,7 @@ Store создается в `src/store/index.ts`.
 - `settings` - глобальная загрузка и модальная ошибка;
 - `hackathons` - список, активный и текущий хакатон, поля формы;
 - `teams` - команды хакатона и последние invite-ссылки;
-- `admin` - список организаторов;
-- `quotes` - legacy слайс из шаблона.
+- `admin` - список организаторов.
 
 Typed hooks:
 
@@ -417,14 +413,6 @@ API-адаптеры находятся в `src/api/hackathonApi.ts`:
 
 - базовые auth/profile сценарии.
 
-Legacy страницы:
-
-- `CreateQuote`;
-- `Quotes`;
-- `RandomQuote`.
-
-Они должны быть удалены после завершения миграции с шаблона цитат.
-
 ## UI И Темизация
 
 Текущий визуальный ориентир - Frutiger Aero:
@@ -462,8 +450,7 @@ Legacy страницы:
 - team status;
 - member actions;
 - feedback;
-- export teams;
-- часть legacy quote endpoints.
+- export teams.
 
 Для командной заявки mock backend:
 
@@ -562,21 +549,20 @@ npm run build
 - управление статусами команд: допуск, отклонение, дисквалификация;
 - дисквалификация отдельных участников из UI;
 - скачивание CSV/XLSX через backend export endpoint;
+- удален legacy quote/user код из исходного шаблона;
 - доменные тесты формы доступа, админки, команд и invite onboarding.
 
 Не готово:
 
 - компонентные тесты ключевых форм;
-- полноценные API adapter tests;
-- удаление legacy quote/user кода.
+- полноценные API adapter tests.
 
 ## Следующий План
 
-Наиболее логичный следующий блок - расчистка legacy template-кода и стабилизация API-слоя:
+Наиболее логичный следующий блок - стабилизация API-слоя:
 
-1. Убрать `QuoteCard`, `Quotes`, `RandomQuote`, `CreateQuote`, `store/quote`, legacy `store/user` и старые quote/user entities, если они больше не используются.
-2. Добавить API adapter tests для `hackathonApi`: auth, hackathons, teams, admin, invitations.
-3. Сверить DTO с `openapi.yaml` и добавить typed helpers для ошибок API.
-4. После стабилизации контрактов добавить компонентные тесты ключевых форм.
+1. Добавить API adapter tests для `hackathonApi`: auth, hackathons, teams, admin, invitations, exports.
+2. Сверить DTO с `openapi.yaml` и добавить typed helpers для ошибок API.
+3. После стабилизации контрактов добавить компонентные тесты ключевых форм.
 
-Практически лучше начать с legacy cleanup: это уменьшит шум в store/entities/routes и сделает дальнейшие тесты API-адаптеров проще.
+Практически лучше начать с API adapter tests: legacy шум уже убран, теперь можно фиксировать контрактные ожидания без лишних зависимостей от старого шаблона.

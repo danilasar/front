@@ -138,7 +138,7 @@
 
 Визуальный стиль: приложение переведено на Frutiger Aero направление: стеклянные MUI-панели, голубой/зеленый/белый градиентный фон, полупрозрачные контролы, водно-небесная атмосфера и иконки в ключевых действиях.
 
-Mock backend: реализован `mock-backend/server.mjs` с auth, пользователями, организаторами, хакатонами, form fields, командами, статусами, приглашениями и частью legacy quote endpoints для обратной совместимости.
+Mock backend: реализован `mock-backend/server.mjs` с auth, пользователями, организаторами, хакатонами, form fields, командами, статусами, приглашениями и export endpoints.
 
 Хакатоны: есть список хакатонов, карточка хакатона, получение активного хакатона, получение полей команды, фильтр списка/архива, переключение активного хакатона и загрузка PDF-регламента.
 
@@ -154,7 +154,7 @@ Invite onboarding: приглашенный участник может откр
 
 Экспорт заявок: UI запрашивает CSV или XLSX через backend export endpoint, генерация файла не выполняется на фронтенде.
 
-Redux/API: подключены слайсы `auth`, `settings`, `hackathons`, `teams`, `admin`; legacy `quotes` еще остается. API-адаптеры лежат в `frontend/src/api/hackathonApi.ts`.
+Redux/API: подключены слайсы `auth`, `settings`, `hackathons`, `teams`, `admin`. API-адаптеры лежат в `frontend/src/api/hackathonApi.ts`.
 
 Доменные helpers: `frontend/src/domain/access.ts`, `adminForms.ts`, `teamForms.ts`, `teamModeration.ts`, `hackathonManagement.ts`, `rulesUpload.ts`, `teamFieldForms.ts`, `teamFieldValues.ts`, `inviteForms.ts` покрывают правила доступа, валидацию, преобразование form values в payload, отображение модерационных данных, фильтрацию хакатонов, проверку PDF-регламента, конструктор полей команды, значения этих полей в заявке и invite onboarding.
 
@@ -164,16 +164,12 @@ Redux/API: подключены слайсы `auth`, `settings`, `hackathons`, `
 
 API adapter tests и компонентные тесты ключевых форм.
 
-Удаление legacy quote-кода: `QuoteCard`, `Quotes`, `RandomQuote`, `CreateQuote`, `store/quote`, `store/user`, старые `entities/quote` и `entities/user`.
-
 8.3. Рекомендуемый следующий блок
 
-Следующим лучше брать техническую расчистку и стабилизацию контрактов:
+Следующим лучше брать стабилизацию контрактов:
 
-1. убрать legacy quote/user код из template-образца;
+1. добавить API adapter tests для `hackathonApi`;
 
-2. добавить API adapter tests для `hackathonApi`;
+2. синхронизировать DTO с `openapi.yaml` и добавить typed helpers для ошибок;
 
-3. синхронизировать DTO с `openapi.yaml` и добавить typed helpers для ошибок;
-
-4. после этого добавить компонентные тесты для ключевых форм.
+3. после этого добавить компонентные тесты для ключевых форм.
