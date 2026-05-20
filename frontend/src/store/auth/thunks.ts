@@ -73,16 +73,16 @@ export const completeInviteRegistration = createAsyncThunk(
 );
 
 export const restoreAuth = createAsyncThunk("auth/restore", async (_, { dispatch }) => {
+  const accessToken = sessionStorage.getItem("accessToken");
   const refreshToken = sessionStorage.getItem("refreshToken");
-  if (!refreshToken) {
+
+  if (!accessToken && !refreshToken) {
     dispatch(authFailed());
     return null;
   }
 
   try {
     dispatch(startLoading());
-    const tokens = await authApi.refresh(refreshToken);
-    persistTokens(tokens);
     const user = await authApi.me();
     dispatch(authSuccess(user));
     return user;
