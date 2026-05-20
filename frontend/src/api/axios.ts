@@ -39,7 +39,7 @@ api.interceptors.response.use(
       if (!oldRefreshToken) {
         sessionStorage.setItem("accessToken", "");
         sessionStorage.setItem("refreshToken", "");
-        return;
+        return Promise.reject(error);
       }
       try {
         const res = await api.post<{ accessToken: string, refreshToken: string }>(

@@ -1,24 +1,16 @@
 import { useEffect, useState } from "react";
-import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
-import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import PictureAsPdfOutlinedIcon from "@mui/icons-material/PictureAsPdfOutlined";
+import { AlertCircle, FileText, Plus, Trash2, Upload } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert";
+import { Button } from "../components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
+import { Badge } from "../components/ui/badge";
 import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Checkbox,
-  Chip,
-  FormControl,
-  FormControlLabel,
-  InputLabel,
-  MenuItem,
   Select,
-  Stack,
-  Typography,
-} from "@mui/material";
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select";
 import { Link, useParams } from "react-router-dom";
 import { GridBackGroundLayout } from "../ui/GridBackGroundLayout";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
@@ -110,64 +102,75 @@ export default function HackathonDetails() {
   };
 
   return (
-    <GridBackGroundLayout sx={{ py: 14 }}>
-      <Stack spacing={3} sx={{ width: "min(900px, 100%)", px: 2 }}>
+    <GridBackGroundLayout className="py-10">
+      <div className="mx-auto w-full max-w-5xl space-y-6">
         {hackathon && (
           <>
             <Card>
-              <CardContent>
-            <Stack spacing={1}>
-              <Chip label={hackathon.status} color={hackathon.status === "active" ? "secondary" : "default"} />
-              <Typography variant="h3">{hackathon.title}</Typography>
-              <Typography color="text.secondary">{hackathon.description}</Typography>
-            </Stack>
+              <CardContent className="pt-6">
+                <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+                  <div className="space-y-3">
+                    <Badge variant={hackathon.status === "active" ? "secondary" : "default"}>
+                      {hackathon.status}
+                    </Badge>
+                    <div>
+                      <h1 className="text-3xl font-bold tracking-normal md:text-4xl">{hackathon.title}</h1>
+                      <p className="mt-2 max-w-3xl text-muted-foreground">{hackathon.description}</p>
+                    </div>
+                  </div>
+                  <div className="grid min-w-52 grid-cols-2 gap-3 text-sm">
+                    <div className="rounded-md border bg-muted/50 p-3">
+                      <div className="text-muted-foreground">Команда</div>
+                      <div className="text-lg font-bold">{hackathon.minTeamSize}-{hackathon.maxTeamSize}</div>
+                    </div>
+                    <div className="rounded-md border bg-muted/50 p-3">
+                      <div className="text-muted-foreground">Поля</div>
+                      <div className="text-lg font-bold">{fields.length}</div>
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardContent>
-                <Stack spacing={1}>
-                  <Typography variant="h5">Параметры команды</Typography>
-                  <Typography>Размер команды: {hackathon.minTeamSize}-{hackathon.maxTeamSize}</Typography>
-                  <Typography>Полей формы: {fields.length}</Typography>
-                </Stack>
-              </CardContent>
-            </Card>
-
-            <Alert severity={access.allowed ? "success" : "info"}>{access.reason}</Alert>
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>{access.allowed ? "Управление доступно" : "Режим просмотра"}</AlertTitle>
+              <AlertDescription>{access.reason}</AlertDescription>
+            </Alert>
 
             <Card>
-              <CardContent>
-                <Stack spacing={2}>
-                  <Box display="flex" justifyContent="space-between" gap={2} flexWrap="wrap">
-                    <Box>
-                      <Typography variant="h5">PDF-регламент</Typography>
-                      {hackathon.rulesFile ? (
-                        <Typography color="text.secondary">
-                          {hackathon.rulesFile.originalName} · {Math.ceil(hackathon.rulesFile.sizeBytes / 1024)} КБ
-                        </Typography>
-                      ) : (
-                        <Typography color="text.secondary">Регламент еще не загружен</Typography>
-                      )}
-                    </Box>
-                    {hackathon.rulesFile && (
-                      <Button
-                        component="a"
-                        href={hackathon.rulesFile.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        variant="outlined"
-                        startIcon={<PictureAsPdfOutlinedIcon />}
-                      >
+              <CardHeader>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <CardTitle>Регламент</CardTitle>
+                    <CardDescription>
+                      {hackathon.rulesFile
+                        ? `${hackathon.rulesFile.originalName} · ${Math.ceil(hackathon.rulesFile.sizeBytes / 1024)} КБ`
+                        : "Регламент еще не загружен"}
+                    </CardDescription>
+                  </div>
+                  {hackathon.rulesFile && (
+                    <Button asChild variant="outline">
+                      <a href={hackathon.rulesFile.url} target="_blank" rel="noreferrer">
+                        <FileText className="h-4 w-4" />
                         Открыть PDF
-                      </Button>
-                    )}
-                  </Box>
-
-                  {access.allowed && (
-                    <Stack spacing={1.5}>
-                      {rulesError && <Alert severity="error">{rulesError}</Alert>}
-                      <Button variant="outlined" component="label" startIcon={<CloudUploadOutlinedIcon />}>
+                      </a>
+                    </Button>
+                  )}
+                </div>
+              </CardHeader>
+              {access.allowed && (
+                <CardContent className="space-y-3">
+                  {rulesError && (
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>{rulesError}</AlertDescription>
+                    </Alert>
+                  )}
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <Button variant="outline" asChild>
+                      <label>
+                        <Upload className="h-4 w-4" />
                         Выбрать PDF
                         <input
                           hidden
@@ -178,172 +181,169 @@ export default function HackathonDetails() {
                             setRulesError(null);
                           }}
                         />
-                      </Button>
-                      {rulesFile && (
-                        <Typography color="text.secondary">{rulesFile.name}</Typography>
-                      )}
-                      <Button
-                        variant="contained"
-                        disabled={!rulesFile}
-                        onClick={() => {
-                          void handleRulesUpload();
-                        }}
-                      >
-                        Загрузить регламент
-                      </Button>
-                    </Stack>
-                  )}
-                </Stack>
-              </CardContent>
+                      </label>
+                    </Button>
+                    {rulesFile && <p className="text-sm text-muted-foreground">{rulesFile.name}</p>}
+                    <Button disabled={!rulesFile} onClick={() => void handleRulesUpload()}>
+                      Загрузить регламент
+                    </Button>
+                  </div>
+                </CardContent>
+              )}
             </Card>
 
             <Card>
-              <CardContent>
-                <Stack spacing={2.5}>
-                  <Box>
-                    <Typography variant="h5">Поля команды</Typography>
-                    <Typography color="text.secondary">Динамические поля заявки команды на этот хакатон</Typography>
-                  </Box>
-
-                  {access.allowed && (
-                    <Stack component="form" spacing={2} onSubmit={handleCreateField}>
-                      {fieldErrors.length > 0 && (
-                        <Alert severity="error">{fieldErrors.join(". ")}</Alert>
-                      )}
-                      <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-                        <InputTextField
-                          label="Ключ"
-                          value={fieldForm.key}
-                          onChange={(event) => updateFieldForm({ key: event.target.value })}
-                        />
-                        <InputTextField
-                          label="Подпись"
-                          value={fieldForm.label}
-                          onChange={(event) => updateFieldForm({ label: event.target.value })}
-                        />
-                      </Stack>
+              <CardHeader>
+                <CardTitle>Поля команды</CardTitle>
+                <CardDescription>Динамические поля заявки команды на этот хакатон</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                {access.allowed && (
+                  <form className="space-y-4 rounded-lg border bg-muted/30 p-4" onSubmit={handleCreateField}>
+                    {fieldErrors.length > 0 && (
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>{fieldErrors.join(". ")}</AlertDescription>
+                      </Alert>
+                    )}
+                    <div className="grid gap-4 sm:grid-cols-2">
                       <InputTextField
-                        label="Описание"
-                        value={fieldForm.description}
-                        onChange={(event) => updateFieldForm({ description: event.target.value })}
+                        label="Ключ"
+                        value={fieldForm.key}
+                        onChange={(event) => updateFieldForm({ key: event.target.value })}
                       />
-                      <FormControl fullWidth>
-                        <InputLabel id="team-field-type-label">Тип поля</InputLabel>
-                        <Select
-                          labelId="team-field-type-label"
-                          label="Тип поля"
-                          value={fieldForm.type}
-                          onChange={(event) => updateFieldForm({ type: event.target.value as TeamFieldFormValues["type"] })}
-                        >
-                          {teamFieldTypeOptions.map((option) => (
-                            <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                      {fieldTypeNeedsOptions(fieldForm.type) && (
-                        <InputTextField
-                          label="Варианты"
-                          value={fieldForm.optionsText}
-                          onChange={(event) => updateFieldForm({ optionsText: event.target.value })}
-                          multiline
-                          minRows={3}
-                        />
-                      )}
-                      <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-                        <FormControlLabel
-                          control={<Checkbox checked={fieldForm.required} onChange={(event) => updateFieldForm({ required: event.target.checked })} />}
-                          label="Обязательное"
-                        />
-                        <FormControlLabel
-                          control={<Checkbox checked={fieldForm.visible} onChange={(event) => updateFieldForm({ visible: event.target.checked })} />}
-                          label="Видимое"
-                        />
-                      </Stack>
-                      <Button type="submit" variant="contained" startIcon={<AddCircleOutlineIcon />}>
-                        Добавить поле
-                      </Button>
-                    </Stack>
-                  )}
-
-                  <Stack spacing={1.5}>
-                    {fields.map((field) => (
-                      <Box
-                        key={field.id}
-                        sx={(theme) => ({
-                          border: `1px solid ${theme.palette.divider}`,
-                          borderRadius: 2,
-                          p: 2,
-                          background: theme.palette.mode === "dark" ? "rgba(7, 27, 45, 0.42)" : "rgba(255, 255, 255, 0.42)",
-                        })}
+                      <InputTextField
+                        label="Подпись"
+                        value={fieldForm.label}
+                        onChange={(event) => updateFieldForm({ label: event.target.value })}
+                      />
+                    </div>
+                    <InputTextField
+                      label="Описание"
+                      value={fieldForm.description}
+                      onChange={(event) => updateFieldForm({ description: event.target.value })}
+                    />
+                    <div>
+                      <label className="mb-1.5 block text-sm font-semibold">Тип поля</label>
+                      <Select
+                        value={fieldForm.type}
+                        onValueChange={(value) => updateFieldForm({ type: value as TeamFieldFormValues["type"] })}
                       >
-                        <Stack spacing={1.5}>
-                          <Box display="flex" justifyContent="space-between" gap={1} flexWrap="wrap">
-                            <Box>
-                              <Typography fontWeight={700}>{field.label}</Typography>
-                              <Typography variant="body2" color="text.secondary">{field.key} · {field.type}</Typography>
-                            </Box>
-                            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                              <Chip label={field.required ? "Обязательное" : "Необязательное"} color={field.required ? "primary" : "default"} />
-                              <Chip label={field.visible ? "Видимое" : "Скрыто"} color={field.visible ? "secondary" : "default"} />
-                            </Stack>
-                          </Box>
-                          {field.description && <Typography color="text.secondary">{field.description}</Typography>}
-                          {field.options.length > 0 && (
-                            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                              {field.options.map((option) => (
-                                <Chip key={option.value} label={option.label} />
-                              ))}
-                            </Stack>
-                          )}
-                          {access.allowed && (
-                            <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-                              <Button
-                                variant="outlined"
-                                onClick={() => {
-                                  void handleToggleField(field.id, { required: !field.required });
-                                }}
-                              >
-                                {field.required ? "Сделать необязательным" : "Сделать обязательным"}
-                              </Button>
-                              <Button
-                                variant="outlined"
-                                onClick={() => {
-                                  void handleToggleField(field.id, { visible: !field.visible });
-                                }}
-                              >
-                                {field.visible ? "Скрыть" : "Показать"}
-                              </Button>
-                              <Button
-                                variant="outlined"
-                                color="error"
-                                startIcon={<DeleteOutlineIcon />}
-                                onClick={() => {
-                                  void handleDeleteField(field.id);
-                                }}
-                              >
-                                Удалить
-                              </Button>
-                            </Stack>
-                          )}
-                        </Stack>
-                      </Box>
-                    ))}
-                  </Stack>
-                </Stack>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {teamFieldTypeOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {fieldTypeNeedsOptions(fieldForm.type) && (
+                      <InputTextField
+                        label="Варианты"
+                        value={fieldForm.optionsText}
+                        multiline
+                        minRows={3}
+                        onChange={(event) => updateFieldForm({ optionsText: event.target.value })}
+                      />
+                    )}
+                    <div className="flex flex-wrap gap-4">
+                      <label className="flex items-center gap-2 text-sm font-medium">
+                        <input
+                          type="checkbox"
+                          checked={fieldForm.required}
+                          onChange={(event) => updateFieldForm({ required: event.target.checked })}
+                        />
+                        Обязательное
+                      </label>
+                      <label className="flex items-center gap-2 text-sm font-medium">
+                        <input
+                          type="checkbox"
+                          checked={fieldForm.visible}
+                          onChange={(event) => updateFieldForm({ visible: event.target.checked })}
+                        />
+                        Видимое
+                      </label>
+                    </div>
+                    <Button type="submit">
+                      <Plus className="h-4 w-4" />
+                      Добавить поле
+                    </Button>
+                  </form>
+                )}
+
+                <div className="space-y-3">
+                  {fields.map((field) => (
+                    <div key={field.id} className="rounded-lg border bg-background/70 p-4">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <h3 className="font-bold">{field.label}</h3>
+                          <p className="text-sm text-muted-foreground">{field.key} · {field.type}</p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <Badge variant={field.required ? "default" : "outline"}>
+                            {field.required ? "Обязательное" : "Необязательное"}
+                          </Badge>
+                          <Badge variant={field.visible ? "secondary" : "outline"}>
+                            {field.visible ? "Видимое" : "Скрыто"}
+                          </Badge>
+                        </div>
+                      </div>
+                      {field.description && <p className="mt-3 text-sm text-muted-foreground">{field.description}</p>}
+                      {field.options.length > 0 && (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {field.options.map((option) => (
+                            <Badge key={option.value} variant="outline">{option.label}</Badge>
+                          ))}
+                        </div>
+                      )}
+                      {access.allowed && (
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => void handleToggleField(field.id, { required: !field.required })}
+                          >
+                            {field.required ? "Сделать необязательным" : "Сделать обязательным"}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => void handleToggleField(field.id, { visible: !field.visible })}
+                          >
+                            {field.visible ? "Скрыть" : "Показать"}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => void handleDeleteField(field.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Удалить
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
 
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-              <Button component={Link} to={`/hackathons/${hackathon.id}/teams`} variant="contained">
-                Команды
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button asChild>
+                <Link to={`/hackathons/${hackathon.id}/teams`}>Команды</Link>
               </Button>
-              <Button component={Link} to="/hackathons" variant="outlined">
-                Назад к списку
+              <Button asChild variant="outline">
+                <Link to="/hackathons">Назад к списку</Link>
               </Button>
-            </Stack>
+            </div>
           </>
         )}
-      </Stack>
+      </div>
     </GridBackGroundLayout>
   );
 }

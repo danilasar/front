@@ -2,8 +2,8 @@ import { useForm, type FieldValues, type Path, type RegisterOptions, type Submit
 import { CustomForm } from "../ui/CustomForm";
 import { InputTextField } from "../ui/InputTextField";
 import { GridBackGroundLayout } from "../ui/GridBackGroundLayout";
-import { Typography } from "@mui/material";
 import { Link } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 
 type AuthTemplatePageProps<T extends FieldValues> = {
   title: string;
@@ -37,29 +37,33 @@ export default function AuthTemplatePage<T extends FieldValues>({
     formState: { errors },
   } = useForm<T>();
 
-
   return (
     <GridBackGroundLayout>
-      <Typography variant="h3" sx={{ padding: 1 }}>
-        {title}
-      </Typography>
-      <CustomForm onSubmit={handleSubmit(onSubmit)} buttonText={submitButtonText}>
-        {fields.map((field) => (
-          <InputTextField
-            label={field.label}
-            type={field.type}
-            key={field.name}
-            margin="normal"
-            {...register(field.name, field.rules)}
-            error={!!errors[field.name]}
-            helperText={errors[field.name]?.message as string}
-          />
-        ))}
-      </CustomForm>
-      <Typography sx={{ mt: 2 }}>
-        {switchText}{" "}
-        <Link to={switchTo} >{switchLinkText}</Link>
-      </Typography>
+      <Card className="mx-auto w-full max-w-md">
+        <CardHeader className="text-center">
+          <CardTitle className="text-3xl">{title}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <CustomForm onSubmit={handleSubmit(onSubmit)} buttonText={submitButtonText}>
+            {fields.map((field) => (
+              <div key={field.name} className="mb-4 w-full">
+                <InputTextField
+                  label={field.label}
+                  type={field.type}
+                  {...register(field.name, field.rules)}
+                />
+                {errors[field.name] && (
+                  <p className="mt-1 text-sm text-destructive">{errors[field.name]?.message as string}</p>
+                )}
+              </div>
+            ))}
+          </CustomForm>
+          <p className="mt-5 text-center text-sm text-muted-foreground">
+            {switchText}{" "}
+            <Link to={switchTo} className="font-semibold text-primary hover:underline">{switchLinkText}</Link>
+          </p>
+        </CardContent>
+      </Card>
     </GridBackGroundLayout >
   );
 }

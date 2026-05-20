@@ -1,5 +1,7 @@
 import { useEffect } from "react";
-import { Box, Button, Card, CardActions, CardContent, Chip, Grid, Stack, Typography } from "@mui/material";
+import { Button } from "../components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
+import { Badge } from "../components/ui/badge";
 import { Link } from "react-router-dom";
 import { GridBackGroundLayout } from "../ui/GridBackGroundLayout";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
@@ -16,49 +18,57 @@ export default function Hackathons() {
   }, [dispatch]);
 
   return (
-    <GridBackGroundLayout sx={{ alignItems: "stretch", py: 14 }}>
-      <Stack spacing={3} sx={{ width: "min(1100px, 100%)", px: 2 }}>
+    <GridBackGroundLayout className="py-14">
+      <div className="w-full max-w-5xl px-2 space-y-6">
         <Card>
-          <CardContent sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
-            <Box>
-              <Typography variant="h3">Хакатоны</Typography>
-              <Typography color="text.secondary">Активные события, архив и черновики мероприятий</Typography>
-            </Box>
-          {canCreateHackathon(user?.role) && (
-            <Button component={Link} to="/admin" variant="contained">
-              Создать
-            </Button>
-          )}
+          <CardContent className="flex justify-between items-center gap-4 flex-wrap">
+            <div className="mt-4">
+              <CardTitle className="text-3xl mb-2">Хакатоны</CardTitle>
+              <CardDescription>Активные события, архив и черновики мероприятий</CardDescription>
+            </div>
+            {canCreateHackathon(user?.role) && (
+              <Button asChild>
+                <Link to="/hackathons/new">
+                  Создать
+                </Link>
+              </Button>
+            )}
           </CardContent>
         </Card>
 
-        <Grid container spacing={2}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {hackathons.map((hackathon) => (
-            <Grid size={{ xs: 12, md: 6 }} key={hackathon.id}>
-              <Card sx={{ height: "100%" }}>
-                <CardContent>
-                  <Stack spacing={1}>
-                    <Chip label={hackathon.status} color={hackathon.status === "active" ? "secondary" : "default"} />
-                    <Typography variant="h5">{hackathon.title}</Typography>
-                    <Typography color="text.secondary">{hackathon.description}</Typography>
-                    <Typography variant="body2">
-                      Команда: {hackathon.minTeamSize}-{hackathon.maxTeamSize} участников
-                    </Typography>
-                  </Stack>
-                </CardContent>
-                <CardActions>
-                  <Button component={Link} to={`/hackathons/${hackathon.id}`}>
+            <Card key={hackathon.id} className="flex flex-col">
+              <CardHeader>
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <CardTitle className="text-lg">{hackathon.title}</CardTitle>
+                  <Badge variant={hackathon.status === "active" ? "secondary" : "default"}>
+                    {hackathon.status}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="flex-grow">
+                <CardDescription className="mb-4">{hackathon.description}</CardDescription>
+                <p className="text-sm">
+                  Команда: {hackathon.minTeamSize}-{hackathon.maxTeamSize} участников
+                </p>
+              </CardContent>
+              <div className="px-6 pb-6 pt-0 flex gap-2">
+                <Button asChild size="sm">
+                  <Link to={`/hackathons/${hackathon.id}`}>
                     Подробнее
-                  </Button>
-                  <Button component={Link} to={`/hackathons/${hackathon.id}/teams`}>
+                  </Link>
+                </Button>
+                <Button asChild size="sm" variant="outline">
+                  <Link to={`/hackathons/${hackathon.id}/teams`}>
                     Команды
-                  </Button>
-                </CardActions>
-              </Card>
-            </Grid>
+                  </Link>
+                </Button>
+              </div>
+            </Card>
           ))}
-        </Grid>
-      </Stack>
+        </div>
+      </div>
     </GridBackGroundLayout>
   );
 }

@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
-import LoginOutlinedIcon from "@mui/icons-material/LoginOutlined";
-import PersonAddAltOutlinedIcon from "@mui/icons-material/PersonAddAltOutlined";
-import { Alert, Box, Button, Card, CardContent, Chip, Stack, Typography } from "@mui/material";
+import { LogIn, UserPlus } from "lucide-react";
+import { Alert, AlertDescription } from "../components/ui/alert";
+import { Button } from "../components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
+import { Badge } from "../components/ui/badge";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { invitationApi } from "../api/hackathonApi";
 import {
@@ -78,59 +80,68 @@ export default function Invite() {
   };
 
   return (
-    <GridBackGroundLayout sx={{ py: 14 }}>
-      <Stack spacing={3} sx={{ width: "min(900px, 100%)", px: 2 }}>
+    <GridBackGroundLayout className="py-14">
+      <div className="w-full max-w-4xl px-2 space-y-6">
         <Card>
-          <CardContent>
-            <Stack spacing={1}>
-              <Chip label={invitation?.status ?? "pending"} />
-              <Typography variant="h3">Приглашение в команду</Typography>
-              <Typography color="text.secondary">
-                {invitation ? `${invitation.fullName} · действует до ${new Date(invitation.expiresAt).toLocaleDateString("ru-RU")}` : "Загрузка приглашения"}
-              </Typography>
-            </Stack>
+          <CardContent className="pt-6">
+            <div className="space-y-3">
+              <Badge>{invitation?.status ?? "pending"}</Badge>
+              <div>
+                <CardTitle className="text-3xl mb-2">Приглашение в команду</CardTitle>
+                <CardDescription>
+                  {invitation ? `${invitation.fullName} · действует до ${new Date(invitation.expiresAt).toLocaleDateString("ru-RU")}` : "Загрузка приглашения"}
+                </CardDescription>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
         {invitation && (
-          <Box display="grid" gridTemplateColumns={{ xs: "1fr", md: "1fr 1fr" }} gap={3}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
+              <CardHeader>
+                <CardTitle>Уже есть аккаунт</CardTitle>
+                <CardDescription>Войдите в аккаунт и привяжите его к месте в команде.</CardDescription>
+              </CardHeader>
               <CardContent>
-                <Stack spacing={2}>
-                  <Typography variant="h5">Уже есть аккаунт</Typography>
-                  <Typography color="text.secondary">Войдите в аккаунт и привяжите его к месту в команде.</Typography>
-                  {isAuth ? (
-                    <Button variant="contained" startIcon={<LoginOutlinedIcon />} onClick={() => void acceptExisting()}>
-                      Принять приглашение
-                    </Button>
-                  ) : (
-                    <Button component={Link} to="/login" variant="outlined" startIcon={<LoginOutlinedIcon />}>
+                {isAuth ? (
+                  <Button className="w-full gap-2" onClick={() => void acceptExisting()}>
+                    <LogIn className="w-4 h-4" />
+                    Принять приглашение
+                  </Button>
+                ) : (
+                  <Button asChild variant="outline" className="w-full gap-2">
+                    <Link to="/login">
+                      <LogIn className="w-4 h-4" />
                       Войти
-                    </Button>
-                  )}
-                </Stack>
+                    </Link>
+                  </Button>
+                )}
               </CardContent>
             </Card>
 
             <Card>
+              <CardHeader>
+                <CardTitle>Новый участник</CardTitle>
+              </CardHeader>
               <CardContent>
-                <Stack component="form" spacing={2} onSubmit={completeRegistration}>
-                  <Typography variant="h5">Новый участник</Typography>
-                  {errors.length > 0 && <Alert severity="error">{errors.join(". ")}</Alert>}
+                <form onSubmit={completeRegistration} className="space-y-4">
+                  {errors.length > 0 && <Alert variant="destructive"><AlertDescription>{errors.join(". ")}</AlertDescription></Alert>}
                   <InputTextField label="ФИО" value={form.fullName} onChange={(event) => updateForm({ fullName: event.target.value })} />
                   <InputTextField label="Почта" type="email" value={form.email} onChange={(event) => updateForm({ email: event.target.value })} />
                   <InputTextField label="Пароль" type="password" value={form.password} onChange={(event) => updateForm({ password: event.target.value })} />
                   <InputTextField label="Учебное заведение" value={form.education} onChange={(event) => updateForm({ education: event.target.value })} />
                   <InputTextField label="Курс" value={form.course} onChange={(event) => updateForm({ course: event.target.value })} />
-                  <Button type="submit" variant="contained" startIcon={<PersonAddAltOutlinedIcon />}>
+                  <Button type="submit" className="w-full gap-2">
+                    <UserPlus className="w-4 h-4" />
                     Завершить регистрацию
                   </Button>
-                </Stack>
+                </form>
               </CardContent>
             </Card>
-          </Box>
+          </div>
         )}
-      </Stack>
+      </div>
     </GridBackGroundLayout>
   );
 }

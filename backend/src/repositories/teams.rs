@@ -24,7 +24,7 @@ impl TeamRepo {
 impl TeamRepository for TeamRepo {
     async fn get_by_hackathon(&self, hackathon_id: &Uuid) -> sqlx::Result<Vec<Team>> {
         sqlx::query_as::<_, Team>(
-            r#"SELECT id, hackathon_id, name, status as "status: TeamStatus", fields, submitted_at, moderation_reason, created_at, updated_at FROM teams WHERE hackathon_id = $1"#
+            r#"SELECT id, hackathon_id, name, status, fields, submitted_at, moderation_reason, created_at, updated_at FROM teams WHERE hackathon_id = $1 ORDER BY created_at DESC"#
         )
         .bind(hackathon_id)
         .fetch_all(self.db_pool.as_ref())
@@ -33,7 +33,7 @@ impl TeamRepository for TeamRepo {
 
     async fn get_by_id(&self, id: &Uuid) -> sqlx::Result<Option<Team>> {
         sqlx::query_as::<_, Team>(
-            r#"SELECT id, hackathon_id, name, status as "status: TeamStatus", fields, submitted_at, moderation_reason, created_at, updated_at FROM teams WHERE id = $1"#
+            r#"SELECT id, hackathon_id, name, status, fields, submitted_at, moderation_reason, created_at, updated_at FROM teams WHERE id = $1"#
         )
         .bind(id)
         .fetch_optional(self.db_pool.as_ref())
@@ -46,9 +46,9 @@ impl TeamRepository for TeamRepo {
     {
         let id = Uuid::new_v4();
         sqlx::query_as::<_, Team>(
-            r#"INSERT INTO teams (id, hackathon_id, name, status)
-            VALUES ($1, $2, $3, 'draft')
-            RETURNING id, hackathon_id, name, status as "status: TeamStatus", fields, submitted_at, moderation_reason, created_at, updated_at"#
+            r#"INSERT INTO teams (id, hackathon_id, name, status, submitted_at)
+            VALUES ($1, $2, $3, 'submitted', NOW())
+            RETURNING id, hackathon_id, name, status, fields, submitted_at, moderation_reason, created_at, updated_at"#
         )
         .bind(id)
         .bind(hackathon_id)

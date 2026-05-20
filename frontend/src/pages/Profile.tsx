@@ -1,13 +1,5 @@
-import {
-  Box,
-  Container,
-  Typography,
-  Card,
-  CardContent,
-  Avatar,
-  Divider,
-  Button
-} from "@mui/material"
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
+import { Button } from "../components/ui/button"
 import { Link, useNavigate } from "react-router-dom"
 import { GridBackGroundLayout } from "../ui/GridBackGroundLayout"
 import { useAppDispatch, useAppSelector } from "../store/hooks"
@@ -20,8 +12,8 @@ export default function Profile() {
 
   if (!user) {
     return (
-      <GridBackGroundLayout >
-        <Typography>Пользователь не найден</Typography>
+      <GridBackGroundLayout>
+        <p className="text-lg">Пользователь не найден</p>
       </GridBackGroundLayout>
     )
   }
@@ -32,83 +24,39 @@ export default function Profile() {
   }
 
   return (
-    <GridBackGroundLayout >
-      <Container maxWidth="sm">
-        <Card
-          sx={{
-            borderRadius: 2,
-          }}
-        >
-          <CardContent>
-            <Box
-              display="flex"
-              flexDirection="column"
-              alignItems="center"
-              mb={2}
-            >
-              <Avatar sx={(theme) => {
-                return {
-                  width: 80,
-                  height: 80,
-                  mb: 1,
-                  background: theme.palette.secondary.main,
-                }
-              }}>
+    <GridBackGroundLayout>
+      <div className="w-full max-w-md">
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col items-center gap-3 mb-4">
+              <div className="w-20 h-20 rounded-full bg-green-500 flex items-center justify-center text-2xl font-bold text-white">
                 {user.fullName[0]}
-              </Avatar>
+              </div>
+              <div className="text-center">
+                <CardTitle className="text-2xl mb-1">{user.fullName}</CardTitle>
+                <p className="text-muted-foreground">{user.email}</p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-3">
+              <div><span className="font-semibold">ID:</span> {user.id}</div>
+              <div><span className="font-semibold">Роль:</span> {user.role}</div>
+              <div><span className="font-semibold">Почта:</span> {user.email}</div>
+              <div><span className="font-semibold">Учебное заведение:</span> {user.education ?? "Не указано"}</div>
+            </div>
 
-              <Typography variant="h5">
-                {user.fullName}
-              </Typography>
-
-              <Typography color="text.secondary">
-                {user.email}
-              </Typography>
-            </Box>
-
-            <Divider sx={{ my: 2 }} />
-
-            <Box>
-              <Typography>
-                <b>ID:</b> {user.id}
-              </Typography>
-
-              <Typography>
-                <b>Роль:</b> {user.role}
-              </Typography>
-
-              <Typography>
-                <b>Почта:</b> {user.email}
-              </Typography>
-
-              <Typography>
-                <b>Учебное заведение:</b> {user.education ?? "Не указано"}
-              </Typography>
-            </Box>
-
-            <Divider sx={{ my: 2 }} />
-
-            <Box display="flex" justifyContent="space-between">
-              <Button
-                variant="contained"
-                key={"/"}
-                component={Link}
-                to={"/"}
-              >
-                На главную
+            <div className="border-t pt-4 flex gap-2 justify-between">
+              <Button asChild>
+                <Link to="/">На главную</Link>
               </Button>
-
-              <Button
-                variant="contained"
-                color="error"
-                onClick={handleLogout}
-              >
+              <Button variant="destructive" onClick={handleLogout}>
                 Выйти
               </Button>
-            </Box>
+            </div>
           </CardContent>
         </Card>
-      </Container>
+      </div>
     </GridBackGroundLayout>
   )
 }

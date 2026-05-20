@@ -22,7 +22,7 @@ impl TeamMemberRepo {
 impl TeamMemberRepository for TeamMemberRepo {
     async fn get_by_team(&self, team_id: &Uuid) -> sqlx::Result<Vec<TeamMember>> {
         sqlx::query_as::<_, TeamMember>(
-            r#"SELECT id, team_id, user_id, full_name, email, role as "role: TeamMemberRole", status as "status: TeamMemberStatus" FROM team_members WHERE team_id = $1"#
+            r#"SELECT id, team_id, user_id, full_name, email, role, status FROM team_members WHERE team_id = $1"#
         )
         .bind(team_id)
         .fetch_all(self.db_pool.as_ref())
@@ -37,7 +37,7 @@ impl TeamMemberRepository for TeamMemberRepo {
         sqlx::query_as::<_, TeamMember>(
             r#"INSERT INTO team_members (id, team_id, user_id, full_name, email, role, status)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
-            RETURNING id, team_id, user_id, full_name, email, role as "role: TeamMemberRole", status as "status: TeamMemberStatus""#
+            RETURNING id, team_id, user_id, full_name, email, role, status"#
         )
         .bind(id)
         .bind(team_id)

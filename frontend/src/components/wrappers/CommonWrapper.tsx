@@ -1,41 +1,24 @@
 import type { ReactNode } from "react";
 import { useAppSelector } from "../../store/hooks";
-import { CircularProgress, Box } from "@mui/material";
-
 
 export const CommonWrapper = ({ children }: { children: ReactNode }) => {
   const isLoading = useAppSelector((state) => state.settings.isLoading);
 
   return (
-    <Box sx={{ position: "relative" }}>
-      <Box
-        sx={{
-          filter: isLoading ? "blur(4px)" : "none",
-          pointerEvents: isLoading ? "none" : "auto",
-          transition: "0.3s",
-        }}
+    <div className="relative">
+      <div
+        className={`transition-all duration-300 ${
+          isLoading ? "blur-sm pointer-events-none" : ""
+        }`}
       >
         {children}
-      </Box>
+      </div>
 
       {isLoading && (
-        <Box
-          sx={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            backdropFilter: "blur(2px)",
-            zIndex: 10,
-          }}
-        >
-          <CircularProgress />
-        </Box>
+        <div className="absolute inset-0 flex items-center justify-center backdrop-blur-sm z-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
       )}
-    </Box>
+    </div>
   );
 };

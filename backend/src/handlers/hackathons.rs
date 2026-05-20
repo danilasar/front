@@ -5,16 +5,51 @@ use axum::{
     response::IntoResponse,
     routing::{get, post, patch, delete, put},
 };
+use serde::Serialize;
 use utoipa::OpenApi;
 use uuid::Uuid;
 
 use crate::{
     config::AppState,
+    models::hackathons::Hackathon,
     repositories::hackathons::HackathonRepository,
-    schemas::hackathons::{HackathonResponse, CreateHackathonRequest, FileAsset},
+    schemas::hackathons::{CreateHackathonRequest, FileAsset, HackathonResponse},
 };
 
 pub struct HackathonRouter;
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct Page<T> {
+    page: u32,
+    page_size: u32,
+    total: usize,
+    items: Vec<T>,
+}
+
+async fn organizer_ids_for(state: &AppState, hackathon_id: Uuid) -> Result<Vec<Uuid>, StatusCode> {
+    sqlx::query_scalar::<_, Uuid>(
+        "SELECT user_id FROM hackathon_organizers WHERE hackathon_id = $1 ORDER BY user_id"
+    )
+    .bind(hackathon_id)
+    .fetch_all(state.hackathon_repo.db_pool.as_ref())
+    .await
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+}
+
+async fn hackathon_response(state: &AppState, hackathon: Hackathon) -> Result<HackathonResponse, StatusCode> {
+    let mut response = HackathonResponse::from(hackathon);
+    response.organizer_ids = organizer_ids_for(state, response.id).await?;
+    Ok(response)
+}
+
+async fn hackathon_responses(state: &AppState, hackathons: Vec<Hackathon>) -> Result<Vec<HackathonResponse>, StatusCode> {
+    let mut responses = Vec::with_capacity(hackathons.len());
+    for hackathon in hackathons {
+        responses.push(hackathon_response(state, hackathon).await?);
+    }
+    Ok(responses)
+}
 
 impl HackathonRouter {
     pub fn set_router() -> Router<AppState> {
@@ -51,7 +86,15 @@ pub async fn list_hackathons(
 ) -> Result<impl IntoResponse, StatusCode> {
     let repo = state.hackathon_repo.clone();
     match repo.get_all().await {
-        Ok(h) => Ok(Json(h.into_iter().map(HackathonResponse::from).collect::<Vec<_>>())),
+        Ok(h) => {
+            let items = hackathon_responses(&state, h).await?;
+            Ok(Json(Page {
+                page: 1,
+                page_size: items.len() as u32,
+                total: items.len(),
+                items,
+            }))
+        }
         Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
     }
 }
@@ -72,7 +115,7 @@ pub async fn create_hackathon(
 ) -> Result<impl IntoResponse, StatusCode> {
     let repo = state.hackathon_repo.clone();
     match repo.create(repo.db_pool.clone().as_ref(), payload).await {
-        Ok(h) => Ok((StatusCode::CREATED, Json(HackathonResponse::from(h)))),
+        Ok(h) => Ok((StatusCode::CREATED, Json(hackathon_response(&state, h).await?))),
         Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
     }
 }
@@ -91,7 +134,7 @@ pub async fn get_active_hackathon(
 ) -> Result<impl IntoResponse, StatusCode> {
     let repo = state.hackathon_repo.clone();
     match repo.get_active().await {
-        Ok(Some(h)) => Ok(Json(HackathonResponse::from(h))),
+        Ok(Some(h)) => Ok(Json(hackathon_response(&state, h).await?)),
         Ok(None) => Err(StatusCode::NOT_FOUND),
         Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
     }
@@ -115,7 +158,7 @@ pub async fn get_hackathon(
 ) -> Result<impl IntoResponse, StatusCode> {
     let repo = state.hackathon_repo.clone();
     match repo.get_by_id(&id).await {
-        Ok(Some(h)) => Ok(Json(HackathonResponse::from(h))),
+        Ok(Some(h)) => Ok(Json(hackathon_response(&state, h).await?)),
         Ok(None) => Err(StatusCode::NOT_FOUND),
         Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
     }
@@ -131,10 +174,33 @@ pub async fn get_hackathon(
     )
 )]
 pub async fn update_hackathon(
-    Path(_id): Path<Uuid>,
-    State(_state): State<AppState>,
-) -> Result<StatusCode, StatusCode> {
-    todo!("Реализовать обновление полей хакатона")
+    Path(id): Path<Uuid>,
+    State(state): State<AppState>,
+    Json(payload): Json<serde_json::Value>,
+) -> Result<impl IntoResponse, StatusCode> {
+    if let Some(title) = payload.get("title").and_then(|value| value.as_str()) {
+        sqlx::query("UPDATE hackathons SET title = $2, updated_at = NOW() WHERE id = $1")
+            .bind(id)
+            .bind(title)
+            .execute(state.hackathon_repo.db_pool.as_ref())
+            .await
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    }
+
+    if let Some(description) = payload.get("description") {
+        sqlx::query("UPDATE hackathons SET description = $2, updated_at = NOW() WHERE id = $1")
+            .bind(id)
+            .bind(description.as_str())
+            .execute(state.hackathon_repo.db_pool.as_ref())
+            .await
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    }
+
+    match state.hackathon_repo.get_by_id(&id).await {
+        Ok(Some(h)) => Ok(Json(hackathon_response(&state, h).await?)),
+        Ok(None) => Err(StatusCode::NOT_FOUND),
+        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+    }
 }
 
 #[utoipa::path(
@@ -146,10 +212,15 @@ pub async fn update_hackathon(
     )
 )]
 pub async fn delete_hackathon(
-    Path(_id): Path<Uuid>,
-    State(_state): State<AppState>,
+    Path(id): Path<Uuid>,
+    State(state): State<AppState>,
 ) -> Result<StatusCode, StatusCode> {
-    todo!("Реализовать удаление хакатона")
+    sqlx::query("DELETE FROM hackathons WHERE id = $1")
+        .bind(id)
+        .execute(state.hackathon_repo.db_pool.as_ref())
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    Ok(StatusCode::NO_CONTENT)
 }
 
 #[utoipa::path(
@@ -172,7 +243,7 @@ pub async fn activate_hackathon(
     match repo.activate(&id).await {
         Ok(_) => {
             if let Ok(Some(h)) = repo.get_by_id(&id).await {
-                Ok((StatusCode::OK, Json(HackathonResponse::from(h))))
+                Ok((StatusCode::OK, Json(hackathon_response(&state, h).await?)))
             } else {
                 Err(StatusCode::INTERNAL_SERVER_ERROR)
             }
@@ -204,10 +275,11 @@ pub async fn upload_rules(
                 .await
                 .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-             return Ok(Json(FileAsset {
-                 id: file_id,
-                 url: format!("/api/v1/files/{}", file_id),
-             }));
+             return match state.hackathon_repo.get_by_id(&id).await {
+                 Ok(Some(h)) => Ok(Json(hackathon_response(&state, h).await?)),
+                 Ok(None) => Err(StatusCode::NOT_FOUND),
+                 Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+             };
         }
     }
     Err(StatusCode::BAD_REQUEST)

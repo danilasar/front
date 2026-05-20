@@ -1,34 +1,34 @@
-import { TextField, type TextFieldProps } from "@mui/material";
+import { Input } from "../components/ui/input";
+import React from "react";
+import { cn } from "../lib/utils";
 
-export const InputTextField = ({ sx, ...props }: TextFieldProps) => {
+interface InputTextFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
+  multiline?: boolean;
+  minRows?: number;
+}
+
+export const InputTextField = ({ label, className, multiline, minRows, ...props }: InputTextFieldProps) => {
+  const fieldClassName = cn(
+    "aero-field w-full border border-input backdrop-blur-sm",
+    className,
+  );
+
   return (
-    <TextField
-      sx={[(theme) => {
-        const fontColor = theme.palette.text.primary;
-        return {
-          "& .MuiOutlinedInput-root": {
-            borderRadius: 2,
-            background: theme.palette.mode === "dark"
-              ? "rgba(7, 27, 45, 0.62)"
-              : "rgba(255, 255, 255, 0.68)",
-            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.72)",
-            backdropFilter: "blur(12px)",
-          },
-          "& .MuiInputBase-input": {
-            color: fontColor,
-          },
-          "& .MuiInputLabel-root": {
-            color: fontColor,
-          },
-          "& .MuiInputLabel-root.Mui-focused": {
-            color: fontColor,
-          },
-        }
-      },
-      ...(Array.isArray(sx) ? sx : [sx])
-      ]}
-      fullWidth
-      {...props}
-    />
+    <div className="w-full">
+      {label && <label className="mb-1.5 block text-sm font-semibold text-foreground">{label}</label>}
+      {multiline ? (
+        <textarea
+          {...(props as React.TextareaHTMLAttributes<HTMLTextAreaElement>)}
+          rows={minRows}
+          className={cn(
+            "aero-field flex min-h-24 rounded-md px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+            fieldClassName,
+          )}
+        />
+      ) : (
+        <Input {...props} className={fieldClassName} />
+      )}
+    </div>
   );
 }

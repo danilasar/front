@@ -1,15 +1,10 @@
-import { Routes, Route } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import NavBar from "./components/NavBar";
 import { routes } from "./routes";
-import { CssBaseline, ThemeProvider } from "@mui/material";
-import { darkTheme, lightTheme } from "./theme";
 import { useEffect, useState } from "react";
 import { ErrorModal } from "./components/ErrorModal";
 import { AuthWrapper } from "./components/wrappers/AuthWrapper";
-import { GuestWrapper } from "./components/wrappers/GuestWrapper";
 import { CommonWrapper } from "./components/wrappers/CommonWrapper";
-import { GuardWrapper } from "./components/wrappers/GuardWrapper";
-import { RoleWrapper } from "./components/wrappers/RoleWrapper";
 import { ColorModeContext } from "./themeModeContext";
 
 function App() {
@@ -31,62 +26,23 @@ function App() {
   }
 
   return (
-    <ColorModeContext.Provider value={{ toggleTheme }}>
-      <ThemeProvider theme={darkMode ? darkTheme : lightTheme}>
-        <CssBaseline />
+    <ColorModeContext.Provider value={{ darkMode, toggleTheme }}>
+      <div className={`${darkMode ? "dark" : ""} min-h-screen bg-background text-foreground`}>
         <NavBar />
         <ErrorModal />
         <CommonWrapper>
           <AuthWrapper>
             <Routes>
-              <Route>
-                {routes
-                  .filter((router) =>
-                    router.isPrivate === undefined
-                    && router.isGuest === undefined)
-                  .map((router) =>
-                    <Route
-                      key={router.path}
-                      path={router.path}
-                      element={router.element} />
-
-                  )}
-              </Route>
-
-              <Route element={<GuestWrapper />}>
-                {routes
-                  .filter((router) => router.isGuest === true)
-                  .map((router) =>
-                    <Route
-                      key={router.path}
-                      path={router.path}
-                      element={router.element} />
-                  )}
-              </Route>
-
-              <Route element={<GuardWrapper />}>
-                {routes
-                  .filter((router) => router.isPrivate === true && router.roles === undefined)
-                  .map((router) =>
-                    <Route
-                      key={router.path}
-                      path={router.path}
-                      element={router.element} />
-
-                  )}
-              </Route>
-
-              {routes
-                .filter((router) => router.isPrivate === true && router.roles !== undefined)
-                .map((router) => (
-                  <Route key={router.path} element={<RoleWrapper roles={router.roles ?? []} />}>
-                    <Route path={router.path} element={router.element} />
-                  </Route>
-                ))}
+              {routes.map((route) => (
+                <Route
+                  key={route.path}
+                  {...route}
+                />
+              ))}
             </Routes>
           </AuthWrapper>
         </CommonWrapper>
-      </ThemeProvider>
+      </div>
     </ColorModeContext.Provider >
   );
 }
